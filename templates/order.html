@@ -1,0 +1,14 @@
+<html lang="en">
+<head>
+    <title>Metoda</title>
+    <link rel="stylesheet" href="/static/styles/order_style.css">
+</head>
+<header>
+    <h1>
+        <a href="/hello"><img src="/static/img/image.jpg" alt="home"></a>
+        <!--Простой хедер, чтобы возвращаться на главную страницу-->
+    </h1>
+</header>
+<h1>Информация о заказе №{{ .order.ID }}</h1>
+<h2>Заголовок: {{ .order.Title }}</h2>
+</html>
