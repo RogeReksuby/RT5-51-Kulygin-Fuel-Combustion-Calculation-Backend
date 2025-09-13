@@ -1,0 +1,552 @@
+.screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 50px;
+    position: relative;
+    background-color: #ffffff;
+}
+
+.screen .my-header {
+    display: flex;
+    flex-direction: column;
+    width: 1920px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0px 0px;
+    position: relative;
+    flex: 0 0 auto;
+    background: linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.3) 0%,
+            rgba(0, 0, 0, 0.3) 100%
+    );
+}
+
+.screen .my-header-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0px 50px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+    overflow: hidden;
+}
+
+.screen .my-header-panel-ramk {
+    display: flex;
+    height: 82px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    margin-top: -1.00px;
+    margin-left: -1.00px;
+    margin-right: -1.00px;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+    border-color: #ffffff;
+}
+
+.screen .panel-ramk-serv {
+    display: flex;
+    height: 80px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    flex-grow: 1;
+}
+
+.screen .photo {
+    position: relative;
+    width: 43px;
+    height: 60px;
+    aspect-ratio: 0.72;
+    object-fit: cover;
+}
+
+.screen .view-wrapper {
+    justify-content: flex-end;
+    display: flex;
+    height: 80px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    flex-grow: 1;
+}
+
+.screen .view {
+    display: inline-flex;
+    flex-direction: column;
+    height: 51px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0px 10px;
+    position: relative;
+    flex: 0 0 auto;
+    background-color: #0f94cf;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.screen .text-wrapper {
+    position: relative;
+    width: fit-content;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 20px;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .header-serv {
+    gap: 20px;
+    padding: 30px 200px;
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+}
+
+.screen .div {
+    position: relative;
+    width: fit-content;
+    margin-top: -1.00px;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 64px;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .div-wrapper {
+    height: 50px;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    background-color: #0f94cf;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+}
+
+.screen .p {
+    position: relative;
+    width: fit-content;
+    margin-top: -8.00px;
+    margin-bottom: -6.00px;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 32px;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+    background-color: #ffffff;
+}
+
+.screen .frame-2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.screen .frame-3 {
+    position: relative;
+    flex: 1;
+    flex-grow: 1;
+    height: 18px;
+}
+
+.screen .frame-4 {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 0px 10px 30px;
+    position: relative;
+    flex: 1;
+    flex-grow: 1;
+}
+
+.screen .text-wrapper-2 {
+    width: fit-content;
+    margin-top: -1.00px;
+    font-family: "Manrope-ExtraBold", Helvetica;
+    font-weight: 800;
+    color: #203563;
+    font-size: 64px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .frame-5 {
+    display: inline-flex;
+    flex-direction: column;
+    min-width: 400px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 0 0 auto;
+    border-bottom-width: 2px;
+    border-bottom-style: solid;
+    border-color: #203563;
+}
+
+.screen .text-wrapper-3 {
+    width: fit-content;
+    margin-top: -2.00px;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #203563;
+    font-size: 20px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .hover-wrapper {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.screen .hover {
+    display: inline-flex;
+    height: 51px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0px 10px;
+    position: relative;
+    flex: 0 0 auto;
+    background-color: #0f94cf;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.screen .korzinagporenie {
+    position: relative;
+    width: 40px;
+    height: 35px;
+    aspect-ratio: 1.14;
+    object-fit: cover;
+}
+
+.screen .element-wrapper {
+    display: flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0px 10px;
+    position: relative;
+    background-color: #ffffff;
+    border-radius: 50px;
+    overflow: hidden;
+}
+
+.screen .element {
+    flex: 1;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #0f94cf;
+    font-size: 20px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .frame-6 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 20px 40px;
+    padding: 0px 310px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+}
+
+.screen .frame-7 {
+    display: flex;
+    flex-direction: column;
+    width: 400px;
+    height: 300px;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    border-radius: 15px;
+    background: linear-gradient(
+            0deg,
+            rgba(0, 0, 0, 0.3) 0%,
+            rgba(0, 0, 0, 0.3) 100%
+    );
+}
+
+.screen .frame-8 {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 20px 10px;
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.screen .text-wrapper-4 {
+    flex: 1;
+    margin-top: -1.00px;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 24px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .frame-9 {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.screen .frame-10 {
+    display: flex;
+    flex-direction: column;
+    height: 51px;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 0px 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    background-color: #0f94cf;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.screen .frame-11 {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.screen .text-wrapper-5 {
+    width: fit-content;
+    font-family: "Manrope-Medium", Helvetica;
+    font-weight: 500;
+    color: #ffffff;
+    font-size: 32px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .text-wrapper-6 {
+    flex: 1;
+    font-family: "Manrope-Medium", Helvetica;
+    font-weight: 500;
+    color: #ffffff;
+    font-size: 32px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+
+.screen .frame-12 {
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.screen .frame-wrapper {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    width: 100%;
+    flex-grow: 1;
+}
+
+.screen .frame-13 {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    padding: 10px;
+    position: relative;
+    flex: 1;
+    align-self: stretch;
+    flex-grow: 1;
+}
+
+.screen .view-2 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 100px;
+    padding: 50px 10px;
+    position: relative;
+    align-self: stretch;
+    width: 100%;
+    flex: 0 0 auto;
+    background-color: #203563;
+}
+
+.screen .text-wrapper-7 {
+    width: fit-content;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #ffffff;
+    font-size: 32px;
+    position: relative;
+    letter-spacing: 0;
+    line-height: normal;
+}
+/* Original CSS code should be injected here */
+
+/* Additional styles for semantic elements and accessibility */
+.search-input {
+    width: 100%;
+    min-width: 400px;
+    padding: 10px;
+    border: none;
+    border-bottom: 2px solid #203563;
+    background: transparent;
+    font-family: "Manrope-Bold", Helvetica;
+    font-weight: 700;
+    color: #203563;
+    font-size: 20px;
+    letter-spacing: 0;
+    line-height: normal;
+    outline: none;
+}
+
+.search-input::placeholder {
+    color: #203563;
+    opacity: 0.7;
+}
+
+.search-input:focus {
+    border-bottom-color: #0f94cf;
+    outline: 2px solid #4a90e2;
+    outline-offset: 2px;
+}
+
+/* Enhanced button focus states */
+.frame-10:focus-visible,
+.view:focus-visible,
+.hover:focus-visible {
+    outline: 2px solid #4a90e2;
+    outline-offset: 2px;
+}
+
+/* Improved hover states for interactive elements */
+.frame-10:hover {
+    background-color: #0d7fb8;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.view:hover {
+    background-color: #0d7fb8;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+.hover:hover {
+    background-color: #0d7fb8;
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Ensure proper cursor for interactive elements */
+.frame-10,
+.view,
+.hover,
+.search-input {
+    cursor: pointer;
+}
+
+.search-input {
+    cursor: text;
+}
+
+/* Screen reader only content for better accessibility */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}

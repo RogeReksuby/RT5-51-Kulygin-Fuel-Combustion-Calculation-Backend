@@ -20,6 +20,32 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
+func (h *Handler) GetFuels(ctx *gin.Context) {
+	var fuels []repository.Fuel
+	var err error
+	fuels, err = h.Repository.GetFuels()
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	ctx.HTML(http.StatusOK, "index2.html", gin.H{
+		"fuels": fuels,
+	})
+}
+
+func (h *Handler) GetReqFuels(ctx *gin.Context) {
+	var fuels []repository.Fuel
+	var err error
+	fuels, err = h.Repository.GetReqFuels()
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	ctx.HTML(http.StatusOK, "req.html", gin.H{
+		"fuels": fuels,
+	})
+}
+
 func (h *Handler) GetOrders(ctx *gin.Context) {
 	var orders []repository.Order
 	var err error
@@ -36,10 +62,26 @@ func (h *Handler) GetOrders(ctx *gin.Context) {
 		}
 	}
 
-	ctx.HTML(http.StatusOK, "index.html", gin.H{
+	ctx.HTML(http.StatusOK, "index2.html", gin.H{
 		"time":   time.Now().Format("15:04:05"),
 		"orders": orders,
 		"query":  searchQuery,
+	})
+}
+
+func (h *Handler) GetFuel(ctx *gin.Context) {
+	idFuelStr := ctx.Param("id")
+	idFuel, err := strconv.Atoi(idFuelStr)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	fuel, err := h.Repository.GetFuel(idFuel)
+	if err != nil {
+		logrus.Error(err)
+	}
+	ctx.HTML(http.StatusOK, "fuel.html", gin.H{
+		"fuel": fuel,
 	})
 }
 

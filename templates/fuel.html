@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ .fuel.Title }}</title>
+    <link rel="stylesheet" href="/static/styles/fuelpage.css">
+    <link rel="stylesheet" href="/static/styles/universal.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="headerMore">
+    <div class="headerMoreFrame">
+        <div class="headerMoreLeftFrame">
+            <img class="logoImage" src="http://127.0.0.1:9000/ripimages/photo.png" alt="logo">
+        </div>
+        <div class="headerMoreRightFrame">
+            <a href="/hello">
+                <button class="bButton">
+                    Домой
+                </button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="contentMore">
+    <div class="contentMoreFrame">
+        <img class="cardMoreImage" src="{{ .fuel.CardImage }}" alt="card image">
+        <div class="textsMore">
+            <div class="titleHeatMore">
+                <div class="titleMore">
+                    {{ .fuel.Title }}
+                </div>
+                <div class="heatMore">
+                    {{ .fuel.Heat }} МДж/кг
+                </div>
+            </div>
+            <div class="shortTextMore">
+                {{ .fuel.ShortDesc }}
+            </div>
+            <div class="fullTextMore">
+                {{ .fuel.FullDesc }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="footer">
+    <img class="logoImage" src="http://127.0.0.1:9000/ripimages/photo.png" alt="logo">
+    Расчет энергии сгорания топлива
+</div>
+
+</body>
+</html>

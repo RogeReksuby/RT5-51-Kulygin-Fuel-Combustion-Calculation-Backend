@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Заявка</title>
+    <link rel="stylesheet" href="/static/styles/reqpage.css">
+    <link rel="stylesheet" href="/static/styles/universal.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&family=Manrope:wght@200..800&display=swap" rel="stylesheet">
+
+</head>
+<body>
+
+
+<div class="headerMore">
+    <div class="headerMoreFrame">
+        <div class="headerMoreLeftFrame">
+            <img class="logoImage" src="http://127.0.0.1:9000/ripimages/photo.png" alt="logo">
+        </div>
+        <div class="headerMoreRightFrame">
+            <a href="/hello">
+                <button class="bButton">
+                    Домой
+                </button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="titleReq">Состав заявки</div>
+<div class="buttonsReq">
+    <button class="bButton" style="width: 50%">
+        Оформить заявку
+    </button>
+    <button class="wButton" style="width: 50%">
+        Удалить заявку
+    </button>
+</div>
+
+{{ range .fuels }}
+<div class="cardAllReq">
+    <div class="cardTopReq">
+        <div class="cardReq" style="background:linear-gradient(0deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)) , url({{ .CardImage }}) center/cover no-repeat;*/">
+            <div class="titleButtonCardReq">
+                <div class="titleCardReq">
+                    {{ .Title }}
+                </div>
+                <div class="buttonFrameCardBox">
+                    <a href="/fuel/{{ .ID}}">
+                        <button class="bButton">
+                            Подробнее>
+                        </button>
+                    </a>
+                </div>
+            </div>
+            <div class="blankFrameCardReq"></div>
+        </div>
+        <div class="volumeSpaceFrameReq">
+            <div class="volumeSpaceReq">
+                Введите объем топлива
+            </div>
+            (л)
+        </div>
+
+
+    </div>
+    <div class="resFrameCardReq">
+        Выделение энергии (кДж):
+        <div class="resCardReq"></div>
+    </div>
+</div>
+{{ end }}
+
+
+<div class="resFrameReq">
+    Суммарное выделение энергии (кДж):
+    <div class="resReq"></div>
+</div>
+
+<div class="footer">
+    <img class="logoImage" src="http://127.0.0.1:9000/ripimages/photo.png" alt="logo">
+    Расчет энергии сгорания топлива
+</div>
+
+</body>
+</html>

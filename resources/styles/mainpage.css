@@ -1,0 +1,568 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+.myHeader {
+    /* myHeader */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0px 0px;
+    margin: 0;
+    gap: 10px;
+
+    width: 100%;
+    height: 307px;
+
+    background: linear-gradient(0deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(http://127.0.0.1:9000/ripimages/67b533f8328d3abdd24ae6c571c5c4fd.jpg);
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+
+}
+
+.myHeaderPanel {
+    /* myHeaderPanel */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 50px;
+    gap: 10px;
+
+    width: 100%;
+    height: 80px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.myHeaderPanelFrame {
+    /* myHeaderPanelRamk */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 10px;
+
+    width: 100%;
+    height: 80px;
+
+    border-bottom: 2px solid #FFFFFF;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.panelFrameServ1 {
+    /* PanelRamkServ1 */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0;
+    gap: 10px;
+
+    width: 50%;
+    height: 80px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+
+}
+
+.panelFrameServ2 {
+    /* PanelRamkServ2 */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    padding: 0;
+    gap: 10px;
+
+    width: 50%;
+    height: 80px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+
+}
+
+.headerServ1 {
+    /* headerServ1 */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 200px;
+    gap: 20px;
+
+    width: 100%;
+    height: 147px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+
+    /* Расчет энергии сгорания топлива */
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 64px;
+    line-height: 87px;
+
+    color: #FFFFFF;
+
+}
+
+.headerServ2 {
+    /* headerServ2 */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 100%;
+    height: 50px;
+
+    background: #0F94CF;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    align-self: stretch;
+    flex-grow: 0;
+
+    /* Расчет количества теплоты в кДж, выделившихся при полном сгорании топлива при н. у. */
+
+
+    max-width: 1900px;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 32px;
+    line-height: 44px;
+    /* identical to box height */
+
+    color: #FFFFFF;
+
+
+}
+
+.contentAll {
+    /* contentAll */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 100%;
+
+
+    background: #FFFFFF;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.searchTitle {
+    /* searchTitle */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 100%;
+
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.searchBlankFrame {
+    /* searchBlankFrame */
+    box-sizing: border-box;
+    width: 33%;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 1;
+
+}
+
+.searchTitleFrame {
+    /* searchTitleFrame */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0px 10px 30px;
+    gap: 10px;
+
+    width: 33%;
+    height: 174px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 87px;
+
+    color: #203563;
+
+
+}
+
+.searchString {
+    /* searchString */
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 50%;
+    min-width: 400px;
+    height: 47px;
+
+    border-bottom: 2px solid #203563;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+
+    /* Поиск */
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 27px;
+
+    color: #203563;
+
+
+
+}
+
+.buckFrame {
+    /* buckFrame */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+
+    width: 33%;
+    height: 174px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    align-self: stretch;
+    flex-grow: 1;
+
+}
+
+.buttonBuck {
+    /* buttonBuck */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    gap: 10px;
+
+    width: 110px;
+    height: 51px;
+
+    background: #0F94CF;
+    border-radius: 5px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+
+}
+
+.circleBuck {
+    /* circleBuck */
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    gap: 10px;
+
+    width: 40px;
+    height: 40px;
+
+    background: #FFFFFF;
+    border-radius: 50px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 27px;
+
+    color: #0F94CF;
+
+
+
+}
+
+.content {
+    /* content */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    align-content: flex-start;
+    padding: 0px 109px;
+    gap: 20px 40px;
+
+    width: 100%;
+
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.card {
+    /* card */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 400px;
+    height: 300px;
+    min-height: 300px;
+
+    /* background: linear-gradient(0deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url(metan.png);*/
+    border-radius: 15px;
+    background-size: cover;
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+
+}
+
+.cardTop {
+    /* cardTop */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 380px;
+    height: 93px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.cardTitle {
+    /* cardTitle */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 20px 10px;
+    gap: 10px;
+
+    width: 180px;
+    height: 73px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 33px;
+    /* identical to box height */
+
+    color: #FFFFFF;
+
+}
+
+.cardButton {
+    /* cardButton */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+
+    width: 170px;
+    height: 71px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+
+}
+
+.cardBottom {
+    /* cardBottom */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-end;
+    padding: 10px;
+    gap: 10px;
+
+    width: 380px;
+    height: 177px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 500;
+    font-size: 32px;
+    line-height: 44px;
+    /* identical to box height */
+
+    color: #FFFFFF;
+
+}

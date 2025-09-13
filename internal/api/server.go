@@ -29,8 +29,10 @@ func StartServer() {
 	// регистрирует функцию - обработчик для GET запросов по пути
 	// gin context содержит всю информацию о запросе, объект контекста
 	// он предоставляет доступ к данным запроса и методы для формирования ответа (например JSON)
-	r.GET("/hello", handler.GetOrders)
+	r.GET("/hello", handler.GetFuels)
 	r.GET("/order/:id", handler.GetOrder)
+	r.GET("/fuel/:id", handler.GetFuel)
+	r.GET("/req", handler.GetReqFuels)
 	r.Run()
 
 	log.Println("Server down")
