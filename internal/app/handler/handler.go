@@ -23,13 +23,23 @@ func NewHandler(r *repository.Repository) *Handler {
 func (h *Handler) GetFuels(ctx *gin.Context) {
 	var fuels []repository.Fuel
 	var err error
-	fuels, err = h.Repository.GetFuels()
-	if err != nil {
-		logrus.Error(err)
+	searchString := ctx.Query("searchQuery")
+
+	if searchString == "" {
+		fuels, err = h.Repository.GetFuels()
+		if err != nil {
+			logrus.Error(err)
+		}
+	} else {
+		fuels, err = h.Repository.GetFuelByTitle(searchString)
+		if err != nil {
+			logrus.Error(err)
+		}
 	}
 
 	ctx.HTML(http.StatusOK, "index2.html", gin.H{
-		"fuels": fuels,
+		"fuels":       fuels,
+		"searchQuery": searchString,
 	})
 }
 

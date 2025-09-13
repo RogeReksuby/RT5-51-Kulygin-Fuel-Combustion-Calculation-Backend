@@ -39,10 +39,17 @@
         <div class="searchBlankFrame"></div>
         <div class="searchTitleFrame">
             Топливо
-            <div class="searchString">
-                Поиск
-            </div>
+
+            <form action="/hello" method="get">
+                <div class="searchContainer">
+                    <input type="text" name="searchQuery" value="{{ .searchQuery }}" placeholder="Введите название" class="searchString"/>
+                    <button type="submit" class="bButton" style="height: 50px">Найти</button>
+                </div>
+            </form>
+
+
         </div>
+
         <div class="buckFrame">
             <a href="/req">
                 <button class="buttonBuck">

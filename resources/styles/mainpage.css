@@ -566,3 +566,10 @@
     color: #FFFFFF;
 
 }
+
+.searchContainer {
+    display: flex;
+    align-items: center;     /* выравнивание по вертикали */
+    gap: 10px;              /* расстояние между элементами */
+    flex-direction: row-reverse;
+}

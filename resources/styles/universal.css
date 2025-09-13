@@ -47,6 +47,10 @@
 
 }
 
+.bButton:hover {
+    background-color: #0D83B7;
+}
+
 .wButton {
     /* button2Req */
 
@@ -78,6 +82,10 @@
 
     color: #0F94CF;
 
+}
+
+.wButton:hover {
+    background-color: #F5F5F5;
 }
 
 .headerMore {
