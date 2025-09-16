@@ -3,9 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
-	"net/http"
 	"repback/internal/app/repository"
-	"strconv"
 )
 
 type Handler struct {
@@ -19,54 +17,23 @@ func NewHandler(r *repository.Repository) *Handler {
 	}
 }
 
-func (h *Handler) GetFuels(ctx *gin.Context) {
-	var fuels []repository.Fuel
-	var err error
-	searchString := ctx.Query("searchQuery")
+func (h *Handler) RegisterHandler(router *gin.Engine) {
+	router.GET("/fuels", h.GetFuels)
+	router.GET("/fuel/:id", h.GetFuel)
+	router.GET("/req", h.GetReqFuels)
+}
 
-	if searchString == "" {
-		fuels, err = h.Repository.GetFuels()
-		if err != nil {
-			logrus.Error(err)
-		}
-	} else {
-		fuels, err = h.Repository.GetFuelByTitle(searchString)
-		if err != nil {
-			logrus.Error(err)
-		}
-	}
+func (h *Handler) RegisterStatic(router *gin.Engine) {
+	router.LoadHTMLGlob("templates/*")
+	router.Static("/static", "./resources")
+}
 
-	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"fuels":       fuels,
-		"searchQuery": searchString,
+func (h *Handler) errorHandler(ctx *gin.Context, errorStatusCode int, err error) {
+	logrus.Error(err.Error())
+	ctx.JSON(errorStatusCode, gin.H{
+		"status":      "error",
+		"description": err.Error(),
 	})
 }
 
-func (h *Handler) GetReqFuels(ctx *gin.Context) {
-	var fuels []repository.Fuel
-	var err error
-	fuels, err = h.Repository.GetReqFuels()
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	ctx.HTML(http.StatusOK, "req.html", gin.H{
-		"fuels": fuels,
-	})
-}
-
-func (h *Handler) GetFuel(ctx *gin.Context) {
-	idFuelStr := ctx.Param("id")
-	idFuel, err := strconv.Atoi(idFuelStr)
-	if err != nil {
-		logrus.Error(err)
-	}
-
-	fuel, err := h.Repository.GetFuel(idFuel)
-	if err != nil {
-		logrus.Error(err)
-	}
-	ctx.HTML(http.StatusOK, "fuel.html", gin.H{
-		"fuel": fuel,
-	})
-}
+//
