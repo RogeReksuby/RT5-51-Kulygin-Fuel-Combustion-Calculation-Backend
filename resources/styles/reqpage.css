@@ -1,0 +1,407 @@
+.titleReq {
+
+    display: flex;
+    justify-content: center;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 64px;
+    line-height: 87px;
+
+    color: #203563;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+
+}
+
+.resFrameReq {
+    /* resFrameReq */
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 20px 100px 10px;
+    gap: 10px;
+
+    width: 100%;
+
+
+    border-top: 4px solid #203563;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 5;
+    align-self: stretch;
+    flex-grow: 0;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 44px;
+    /* identical to box height */
+
+    color: #203563;
+
+}
+
+.resReq {
+    /* resReq */
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    gap: 10px;
+
+    width: 50%;
+    height: 51px;
+
+    border: 2px solid #0F94CF;
+    border-radius: 5px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+
+}
+
+.buttonsReq {
+    /* buttonsReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 500px;
+    gap: 10px;
+
+    width: 100%;
+    height: 71px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 2;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.cardAllReq {
+    /* cardAllReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 100%;
+    height: 321px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 3;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.cardTopReq {
+    /* cardTopReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 100%;
+    height: 220px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.cardReq {
+    /* cardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 400px;
+    height: 200px;
+    min-height: 200px;
+
+    border-radius: 15px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+
+}
+
+.titleButtonCardReq {
+    /* titleButtonCardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    gap: 10px;
+
+    width: 380px;
+    height: 93px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 0;
+
+}
+
+.titleCardReq {
+    /* titleCardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 20px 10px;
+    gap: 10px;
+
+    width: 180px;
+    height: 73px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    align-self: stretch;
+    flex-grow: 1;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 24px;
+    line-height: 33px;
+    /* identical to box height */
+
+    color: #FFFFFF;
+
+
+}
+
+.buttonFrameCardBox {
+    /* buttonFrameCardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+
+    width: 170px;
+    height: 71px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+
+}
+
+.blankFrameCardReq {
+    /* blankFrameCardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-end;
+    padding: 10px;
+    gap: 10px;
+
+    width: 380px;
+    height: 77px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 1;
+
+}
+
+.volumeSpaceFrameReq {
+    /* volumeSpaceFrameReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+
+    width: 50%;
+    height: 75px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 0;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 40px;
+    line-height: 55px;
+    /* identical to box height */
+
+    color: #203563;
+
+
+}
+
+.volumeSpaceReq {
+    /* volumeSpaceReq */
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 10px;
+    gap: 10px;
+
+    width: 400px;
+    min-width: 400px;
+    height: 47px;
+
+    border-bottom: 2px solid #203563;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 0;
+    flex-grow: 0;
+
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 27px;
+
+    color: #203563;
+
+}
+
+.resFrameCardReq {
+    /* resFrameCardReq */
+
+    /* Auto layout */
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 200px;
+    gap: 10px;
+
+    width: 100%;
+    height: 71px;
+
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    align-self: stretch;
+    flex-grow: 0;
+
+    font-family: 'Manrope';
+    font-style: normal;
+    font-weight: 800;
+    font-size: 32px;
+    line-height: 44px;
+    /* identical to box height */
+
+    color: #203563;
+
+
+}
+
+.resCardReq {
+    /* resCardReq */
+
+    box-sizing: border-box;
+
+    /* Auto layout */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0px 10px;
+    gap: 10px;
+
+    width: 50%;
+    height: 51px;
+
+    border: 2px solid #0F94CF;
+    border-radius: 5px;
+
+    /* Inside auto layout */
+    flex: none;
+    order: 1;
+    flex-grow: 1;
+
+}
