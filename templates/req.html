@@ -33,9 +33,11 @@
     <button class="bButton" style="width: 50%">
         Оформить заявку
     </button>
-    <button class="wButton" style="width: 50%">
-        Удалить заявку
-    </button>
+    <form action="/remove-cart/{{ .idReq }}" method="post">
+        <button class="wButton" style="width: 100%">
+            Удалить заявку
+        </button>
+    </form>
 </div>
 
 {{ range .fuels }}

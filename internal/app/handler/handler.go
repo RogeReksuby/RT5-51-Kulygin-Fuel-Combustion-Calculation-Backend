@@ -20,8 +20,10 @@ func NewHandler(r *repository.Repository) *Handler {
 func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/fuels", h.GetFuels)
 	router.GET("/fuel/:id", h.GetFuel)
-	router.GET("/req", h.GetReqFuels)
+	router.GET("/req/:id", h.GetReqFuels)
 	router.POST("/delete-fuel", h.DeleteChat)
+	router.POST("/add-to-cart", h.AddToCart)
+	router.POST("/remove-cart/:id", h.RemoveRequest)
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {

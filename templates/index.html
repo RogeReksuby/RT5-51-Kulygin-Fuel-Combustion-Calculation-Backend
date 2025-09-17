@@ -51,7 +51,7 @@
         </div>
         <div class="buckFrame">
             {{ if ne .cart_count 0 }}
-            <a href="/req">
+            <a href="/req/{{ .reqID }}">
                 {{ end }}
                 <button class="buttonBuck">
                     <img src="http://127.0.0.1:9000/ripimages/korzinaGPORENIE.png" alt="button">
@@ -83,9 +83,12 @@
                             Удалить <img src="http://127.0.0.1:9000/ripimages/close-x.png" style="height: 30px">
                         </button>
                     </form>
-                    <button class="bButton" style="width: 100%">
-                        Добавить
-                    </button>
+                    <form action="/add-to-cart" method="post">
+                        <input type="hidden" name="fuel_id" value="{{ .ID }}">
+                        <button class="bButton" style="width: 100%">
+                            Добавить
+                        </button>
+                    </form>
                 </div>
             </div>
             <div class="cardBottom">

@@ -30,6 +30,7 @@ func (h *Handler) GetFuels(ctx *gin.Context) {
 		"fuels":       fuels,
 		"cart_count":  h.Repository.GetCartCount(),
 		"searchQuery": searchString,
+		"reqID":       h.Repository.GetRequestID(uint(1)),
 	})
 }
 
@@ -52,13 +53,19 @@ func (h *Handler) GetFuel(ctx *gin.Context) {
 func (h *Handler) GetReqFuels(ctx *gin.Context) {
 	var fuels []ds.Fuel
 	var err error
-	fuels, err = h.Repository.GetReqFuels()
+	requestIDStr := ctx.Param("id")
+	requestID, err := strconv.Atoi(requestIDStr)
+	if err != nil {
+		logrus.Error(err)
+	}
+	fuels, err = h.Repository.GetReqFuels(uint(requestID))
 	if err != nil {
 		logrus.Error(err)
 	}
 
 	ctx.HTML(http.StatusOK, "req.html", gin.H{
 		"fuels": fuels,
+		"idReq": requestID,
 	})
 }
 
@@ -76,4 +83,28 @@ func (h *Handler) DeleteChat(ctx *gin.Context) {
 		return
 	}
 	ctx.Redirect(http.StatusFound, "/fuels")
+}
+
+func (h *Handler) AddToCart(ctx *gin.Context) {
+	strId := ctx.PostForm("fuel_id")
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}
+	err = h.Repository.AddToCart(uint(id))
+	ctx.Redirect(http.StatusFound, "/fuels")
+}
+
+func (h *Handler) RemoveRequest(ctx *gin.Context) {
+	idReqStr := ctx.Param("id")
+	idReq, err := strconv.Atoi(idReqStr)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	err = h.Repository.RemoveRequest(uint(idReq))
+	ctx.Redirect(http.StatusFound, "/fuels")
+
 }
