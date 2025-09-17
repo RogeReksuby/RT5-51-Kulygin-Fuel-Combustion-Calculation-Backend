@@ -21,6 +21,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/fuels", h.GetFuels)
 	router.GET("/fuel/:id", h.GetFuel)
 	router.GET("/req", h.GetReqFuels)
+	router.POST("/delete-fuel", h.DeleteChat)
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"repback/internal/app/ds"
 	"strings"
 )
@@ -9,7 +10,7 @@ import (
 func (r *Repository) GetFuels() ([]ds.Fuel, error) {
 	var fuels []ds.Fuel
 	// тут запрос SELECT *
-	err := r.db.Find(&fuels).Error
+	err := r.db.Where("is_delete = false").Find(&fuels).Error
 	if err != nil {
 		return nil, err
 	}
@@ -22,7 +23,7 @@ func (r *Repository) GetFuels() ([]ds.Fuel, error) {
 
 func (r *Repository) GetFuel(id int) (ds.Fuel, error) {
 	fuel := ds.Fuel{}
-	err := r.db.Where("id = ?", id).First(&fuel).Error
+	err := r.db.Where("is_delete = false AND id = ?", id).First(&fuel).Error
 	if err != nil {
 		return ds.Fuel{}, err
 	}
@@ -31,7 +32,7 @@ func (r *Repository) GetFuel(id int) (ds.Fuel, error) {
 
 func (r *Repository) GetFuelsByTitle(title string) ([]ds.Fuel, error) {
 	var fuels []ds.Fuel
-	err := r.db.Where("name ILIKE ?", "%"+title+"%").Find(&fuels).Error
+	err := r.db.Where("is_delete = false AND title ILIKE ?", "%"+title+"%").Find(&fuels).Error
 	if err != nil {
 		return nil, err
 	}
@@ -56,6 +57,34 @@ func (r *Repository) GetReqFuels() ([]ds.Fuel, error) {
 	}
 	return reqFuels, nil
 
+}
+
+func (r *Repository) GetCartCount() int64 {
+	var requestID uint
+	var count int64
+	creatorID := 1
+
+	err := r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", creatorID, "черновик").Select("id").First(&requestID).Error
+	if err != nil {
+		return 0
+	}
+
+	err = r.db.Model(&ds.RequestFuel{}).Where("request_id = ?", requestID).Count(&count).Error
+	if err != nil {
+		logrus.Println("Error counting records in list_chats:", err)
+	}
+
+	return count
+}
+
+func (r *Repository) DeleteFuel(fuelId uint) error {
+	err := r.db.Model(&ds.Fuel{}).Where("id = ?", fuelId).UpdateColumn("is_delete", true).Error
+	fmt.Println(fuelId)
+	if err != nil {
+		return fmt.Errorf("Ошибка при удалении чата с id %d: %w", fuelId, err)
+	}
+
+	return nil
 }
 
 func (r *Repository) GetFuelByTitleOld(title string) ([]ds.Fuel, error) {

@@ -49,16 +49,19 @@
 
 
         </div>
-
         <div class="buckFrame">
+            {{ if ne .cart_count 0 }}
             <a href="/req">
+                {{ end }}
                 <button class="buttonBuck">
                     <img src="http://127.0.0.1:9000/ripimages/korzinaGPORENIE.png" alt="button">
+                    {{ if ne .cart_count 0 }}
                     <div class="circleBuck">
-                        2
+                        {{ .cart_count }}
                     </div>
                 </button>
             </a>
+            {{ end }}
         </div>
     </div>
     <div class="content">
@@ -70,10 +73,19 @@
                 </div>
                 <div class="cardButton">
                     <a href="/fuel/{{ .ID}}">
-                        <button class="bButton">
-                            Подробнее>
+                        <button class="bButton" style="width: 100%">
+                            Подробнее   >
                         </button>
                     </a>
+                    <form action="/delete-fuel" method="post">
+                        <input type="hidden" name="fuel_id" value="{{ .ID }}">
+                        <button class="wButton" style="flex-direction: row; width: 100%">
+                            Удалить <img src="http://127.0.0.1:9000/ripimages/close-x.png" style="height: 30px">
+                        </button>
+                    </form>
+                    <button class="bButton" style="width: 100%">
+                        Добавить
+                    </button>
                 </div>
             </div>
             <div class="cardBottom">

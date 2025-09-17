@@ -42,6 +42,7 @@
     line-height: 27px;
 
     color: #FFFFFF;
+    text-underline: none;
 
 
 
@@ -215,4 +216,8 @@
     color: #FFFFFF;
 
 
+}
+
+a {
+    text-decoration: none;
 }

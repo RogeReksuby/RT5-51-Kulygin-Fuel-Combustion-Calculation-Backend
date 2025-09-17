@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"repback/internal/app/ds"
 	"strconv"
+	"strings"
 )
 
 func (h *Handler) GetFuels(ctx *gin.Context) {
@@ -27,6 +28,7 @@ func (h *Handler) GetFuels(ctx *gin.Context) {
 
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
 		"fuels":       fuels,
+		"cart_count":  h.Repository.GetCartCount(),
 		"searchQuery": searchString,
 	})
 }
@@ -58,4 +60,20 @@ func (h *Handler) GetReqFuels(ctx *gin.Context) {
 	ctx.HTML(http.StatusOK, "req.html", gin.H{
 		"fuels": fuels,
 	})
+}
+
+func (h *Handler) DeleteChat(ctx *gin.Context) {
+	strId := ctx.PostForm("fuel_id")
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+	}
+
+	err = h.Repository.DeleteFuel(uint(id))
+	if err != nil && !strings.Contains(err.Error(), "duplicate key value vioalates unique constraint") {
+		return
+	}
+	ctx.Redirect(http.StatusFound, "/fuels")
 }
