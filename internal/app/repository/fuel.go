@@ -50,11 +50,7 @@ func (r *Repository) GetRequestID(userID uint) int {
 
 func (r *Repository) GetReqFuels(requestID uint) ([]ds.Fuel, error) {
 	var fuels []ds.Fuel
-	//var userID uint
-	//err := r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", userID, "черновик").Select("id").First(&requestID).Error
-	//if err != nil {
-	//	return nil, err
-	//}
+
 	var fuelIDs []int64
 	err := r.db.Model(&ds.RequestFuel{}).Where("request_id = ?", requestID).Pluck("fuel_id", &fuelIDs).Error
 	if err != nil {
@@ -130,10 +126,8 @@ func (r *Repository) AddToCart(fuelID uint) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("ыыыы", count)
 
 	if count == 0 {
-		fmt.Println("ffffffffffffffff")
 		newReq := ds.Request{
 			Status:      "черновик",
 			DateCreate:  time.Now(),
@@ -169,7 +163,7 @@ func (r *Repository) AddToCart(fuelID uint) error {
 func (r *Repository) RemoveRequest(requestID uint) error {
 
 	deleteQuery := "UPDATE requests SET status = $1, date_finish = $2, date_update = $3 WHERE id = $4"
-	r.db.Exec(deleteQuery, "завершён", time.Now(), time.Now(), requestID)
+	r.db.Exec(deleteQuery, "удалён", time.Now(), time.Now(), requestID)
 	return nil
 
 }
