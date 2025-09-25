@@ -21,6 +21,15 @@ func (r *Repository) GetFuels() ([]ds.Fuel, error) {
 
 }
 
+func (r *Repository) RequestStatusById(id int) (string, error) {
+	var reqStatus string
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", id).Select("status").First(&reqStatus).Error
+	if err != nil {
+		return "", err
+	}
+	return reqStatus, nil
+}
+
 func (r *Repository) GetFuel(id int) (ds.Fuel, error) {
 	fuel := ds.Fuel{}
 	err := r.db.Where("is_delete = false AND id = ?", id).First(&fuel).Error
@@ -41,7 +50,7 @@ func (r *Repository) GetFuelsByTitle(title string) ([]ds.Fuel, error) {
 
 func (r *Repository) GetRequestID(userID uint) int {
 	var requestID int
-	err := r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", userID, "черновик").Select("id").First(&requestID).Error
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", userID, "черновик").Select("id").First(&requestID).Error
 	if err != nil {
 		return 0
 	}
@@ -52,7 +61,7 @@ func (r *Repository) GetReqFuels(requestID uint) ([]ds.Fuel, error) {
 	var fuels []ds.Fuel
 
 	var fuelIDs []int64
-	err := r.db.Model(&ds.RequestFuel{}).Where("request_id = ?", requestID).Pluck("fuel_id", &fuelIDs).Error
+	err := r.db.Model(&ds.CombustionsFuels{}).Where("request_id = ?", requestID).Pluck("fuel_id", &fuelIDs).Error
 	if err != nil {
 		return nil, err
 	}
@@ -92,12 +101,12 @@ func (r *Repository) GetCartCount() int64 {
 	var count int64
 	creatorID := 1
 
-	err := r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", creatorID, "черновик").Select("id").First(&requestID).Error
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", creatorID, "черновик").Select("id").First(&requestID).Error
 	if err != nil {
 		return 0
 	}
 
-	err = r.db.Model(&ds.RequestFuel{}).Where("request_id = ?", requestID).Count(&count).Error
+	err = r.db.Model(&ds.CombustionsFuels{}).Where("request_id = ?", requestID).Count(&count).Error
 	if err != nil {
 		logrus.Println("Error counting records in list_chats:", err)
 	}
@@ -109,7 +118,7 @@ func (r *Repository) DeleteFuel(fuelId uint) error {
 	err := r.db.Model(&ds.Fuel{}).Where("id = ?", fuelId).UpdateColumn("is_delete", true).Error
 	fmt.Println(fuelId)
 	if err != nil {
-		return fmt.Errorf("Ошибка при удалении чата с id %d: %w", fuelId, err)
+		return fmt.Errorf("Ошибка при удалении услуги с id %d: %w", fuelId, err)
 	}
 
 	return nil
@@ -120,15 +129,14 @@ func (r *Repository) AddToCart(fuelID uint) error {
 	moderatorID := 2
 	var requestID uint
 	var count int64
-
-	//err := r.db.Model(&ds.Request{}).Where("id = ?", userID).Select("id").First(&requestID).Error
-	err := r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", userID, "черновик").Count(&count).Error
+	//err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", userID).Select("id").First(&requestID).Error
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", userID, "черновик").Count(&count).Error
 	if err != nil {
 		return err
 	}
 
 	if count == 0 {
-		newReq := ds.Request{
+		newReq := ds.CombustionCalculation{
 			Status:      "черновик",
 			DateCreate:  time.Now(),
 			DateUpdate:  time.Now(),
@@ -141,12 +149,12 @@ func (r *Repository) AddToCart(fuelID uint) error {
 		}
 	}
 
-	err = r.db.Model(&ds.Request{}).Where("creator_id = ? AND status = ?", userID, "черновик").Select("id").First(&requestID).Error
+	err = r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", userID, "черновик").Select("id").First(&requestID).Error
 	if err != nil {
 		return err
 	}
 
-	newFuelReq := ds.RequestFuel{
+	newFuelReq := ds.CombustionsFuels{
 		RequestID: requestID,
 		FuelID:    fuelID,
 	}
@@ -162,7 +170,7 @@ func (r *Repository) AddToCart(fuelID uint) error {
 
 func (r *Repository) RemoveRequest(requestID uint) error {
 
-	deleteQuery := "UPDATE requests SET status = $1, date_finish = $2, date_update = $3 WHERE id = $4"
+	deleteQuery := "UPDATE combustion_calculations SET status = $1, date_finish = $2, date_update = $3 WHERE id = $4"
 	r.db.Exec(deleteQuery, "удалён", time.Now(), time.Now(), requestID)
 	return nil
 

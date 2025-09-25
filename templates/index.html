@@ -42,7 +42,7 @@
 
             <form action="/fuels" method="get">
                 <div class="searchContainer">
-                    <input type="text" name="searchQuery" value="{{ .searchQuery }}" placeholder="Введите название" class="searchString"/>
+                    <input type="text" name="searchQuery" value="{{ .searchFuelTitleQuery }}" placeholder="Введите название" class="searchString"/>
                     <button type="submit" class="bButton" style="height: 50px">Найти</button>
                 </div>
             </form>
@@ -51,7 +51,7 @@
         </div>
         <div class="buckFrame">
             {{ if ne .cart_count 0 }}
-            <a href="/req/{{ .reqID }}">
+            <a href="/combustion/{{ .reqID }}">
                 {{ end }}
                 <button class="buttonBuck">
                     <img src="http://127.0.0.1:9000/ripimages/korzinaGPORENIE.png" alt="button">
@@ -77,7 +77,7 @@
                             Подробнее   >
                         </button>
                     </a>
-                    <form action="/add-to-cart" method="post">
+                    <form action="/add-to-comb" method="post">
                         <input type="hidden" name="fuel_id" value="{{ .ID }}">
                         <button class="wButton" style="width: 100%">
                             Добавить

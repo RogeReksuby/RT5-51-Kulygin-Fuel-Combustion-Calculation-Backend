@@ -27,10 +27,10 @@ func (h *Handler) GetFuels(ctx *gin.Context) {
 	}
 
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
-		"fuels":       fuels,
-		"cart_count":  h.Repository.GetCartCount(),
-		"searchQuery": searchString,
-		"reqID":       h.Repository.GetRequestID(uint(1)),
+		"fuels":                fuels,
+		"cart_count":           h.Repository.GetCartCount(),
+		"searchFuelTitleQuery": searchString,
+		"reqID":                h.Repository.GetRequestID(uint(1)),
 	})
 }
 
@@ -58,12 +58,23 @@ func (h *Handler) GetReqFuels(ctx *gin.Context) {
 	if err != nil {
 		logrus.Error(err)
 	}
+
+	reqStatus, err := h.Repository.RequestStatusById(requestID)
+	if err != nil {
+		logrus.Error(err)
+	}
+
+	// если заявка по которой переходим удалена, то перенаправляем на главную
+	if reqStatus == "удалён" {
+		ctx.Redirect(http.StatusFound, "/fuels")
+	}
+
 	fuels, err = h.Repository.GetReqFuels(uint(requestID))
 	if err != nil {
 		logrus.Error(err)
 	}
 
-	ctx.HTML(http.StatusOK, "req.html", gin.H{
+	ctx.HTML(http.StatusOK, "combustion.html", gin.H{
 		"fuels": fuels,
 		"idReq": requestID,
 	})
