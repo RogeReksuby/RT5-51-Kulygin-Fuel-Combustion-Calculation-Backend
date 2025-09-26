@@ -373,6 +373,21 @@
 
 }
 
+/* Обычное состояние кнопки */
+.buttonBuck img {
+    filter: none;
+    opacity: 1;
+}
+
+/* Когда корзина пуста — делаем иконку серой */
+.buttonBuck.empty-cart img {
+    filter: grayscale(100%) brightness(80%);
+    opacity: 0.6;
+    /* Можно также добавить курсор "not-allowed" */
+    pointer-events: none; /* необязательно, если кнопка и так disabled */
+}
+
+
 .circleBuck {
     /* circleBuck */
 

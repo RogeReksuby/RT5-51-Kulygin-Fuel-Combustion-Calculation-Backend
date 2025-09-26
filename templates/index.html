@@ -51,15 +51,18 @@
         </div>
         <div class="buckFrame">
             {{ if ne .cart_count 0 }}
-            <a href="/combustion/{{ .reqID }}">
+            <a href="/combustion/{{ .reqID }}" class="cart-link">
                 {{ end }}
-                <button class="buttonBuck">
-                    <img src="http://127.0.0.1:9000/ripimages/korzinaGPORENIE.png" alt="button">
+
+                <button class="buttonBuck {{ if eq .cart_count 0 }}empty-cart{{ end }}"
+                        {{ if eq .cart_count 0 }}disabled{{ end }}>
+                    <img src="http://127.0.0.1:9000/ripimages/korzinaGPORENIE.png" alt="Корзина">
                     {{ if ne .cart_count 0 }}
-                    <div class="circleBuck">
-                        {{ .cart_count }}
-                    </div>
+                    <div class="circleBuck">{{ .cart_count }}</div>
+                    {{ end }}
                 </button>
+
+                {{ if ne .cart_count 0 }}
             </a>
             {{ end }}
         </div>
