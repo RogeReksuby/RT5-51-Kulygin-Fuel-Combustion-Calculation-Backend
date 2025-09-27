@@ -8,5 +8,6 @@ type Fuel struct {
 	CardImage string  `gorm:"type:varchar(255)"`
 	ShortDesc string  `gorm:"type:varchar(200)"`
 	FullDesc  string  `gorm:"type:text"`
+	IsGas     bool    `gorm:"type:boolean;default:false"`
 	IsDelete  bool    `gorm:"type:boolean;default:false;not null"`
 }

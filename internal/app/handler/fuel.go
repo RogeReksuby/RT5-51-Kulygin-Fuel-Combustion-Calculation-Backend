@@ -62,6 +62,7 @@ func (h *Handler) GetReqFuels(ctx *gin.Context) {
 	reqStatus, err := h.Repository.RequestStatusById(requestID)
 	if err != nil {
 		logrus.Error(err)
+		ctx.Redirect(http.StatusFound, "/fuels")
 	}
 
 	// если заявка по которой переходим удалена, то перенаправляем на главную
