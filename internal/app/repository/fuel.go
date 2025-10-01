@@ -342,3 +342,85 @@ func (r *Repository) RegisterUser(login, password, name string, isModerator bool
 
 	return &newUser, nil
 }
+
+func (r *Repository) GetUserProfile(userID uint) (*ds.Users, error) {
+	var user ds.Users
+
+	err := r.db.Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		return nil, fmt.Errorf("пользователь не найден")
+	}
+
+	// Не возвращаем пароль
+	user.Password = ""
+
+	return &user, nil
+}
+
+func (r *Repository) AuthenticateUser(login, password string) (*ds.Users, error) {
+	var user ds.Users
+
+	// Ищем пользователя по логину
+	err := r.db.Where("login = ?", login).First(&user).Error
+	if err != nil {
+		return nil, fmt.Errorf("неверный логин или пароль")
+	}
+
+	// Проверяем пароль (без хеширования)
+	if user.Password != password {
+		return nil, fmt.Errorf("неверный логин или пароль")
+	}
+
+	// Не возвращаем пароль
+	user.Password = ""
+
+	return &user, nil
+}
+
+func (r *Repository) UpdateUser(userID uint, updates map[string]interface{}) (*ds.Users, error) {
+	// Проверяем уникальность логина если он передается
+	if login, exists := updates["login"]; exists && login != "" {
+		var existingUser ds.Users
+		err := r.db.Where("login = ? AND id != ?", login, userID).First(&existingUser).Error
+		if err == nil {
+			return nil, fmt.Errorf("логин '%s' уже занят", login)
+		}
+	}
+
+	// Обновляем только переданные поля
+	if len(updates) > 0 {
+		err := r.db.Model(&ds.Users{}).Where("id = ?", userID).Updates(updates).Error
+		if err != nil {
+			return nil, fmt.Errorf("ошибка обновления: %w", err)
+		}
+	}
+
+	// Получаем обновленного пользователя
+	var user ds.Users
+	r.db.Where("id = ?", userID).First(&user)
+	user.Password = ""
+
+	return &user, nil
+}
+
+// DeleteCombustionCalculation - удаление заявки (мягкое удаление)
+func (r *Repository) DeleteCombustionCalculation(calculationID uint) error {
+	// Проверяем существование заявки
+	var calculation ds.CombustionCalculation
+	err := r.db.Where("id = ?", calculationID).First(&calculation).Error
+	if err != nil {
+		return fmt.Errorf("заявка с ID %d не найдена", calculationID)
+	}
+
+	// Мягкое удаление - меняем статус на "удалён" и обновляем дату
+	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(map[string]interface{}{
+		"status":      "удалён",
+		"date_update": time.Now(),
+	}).Error
+
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении заявки: %w", err)
+	}
+
+	return nil
+}

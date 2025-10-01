@@ -379,3 +379,119 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 		"message": "Пользователь успешно зарегистрирован",
 	})
 }
+
+func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
+	// В реальном приложении ID пользователя берется из JWT токена или сессии
+	// Для лабораторной работы используем фиксированного пользователя
+	userID := uint(1) // Фиксированный ID пользователя
+
+	user, err := h.Repository.GetUserProfile(userID)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   user,
+	})
+}
+
+// LoginUserAPI - REST API метод для аутентификации пользователя
+func (h *Handler) LoginUserAPI(ctx *gin.Context) {
+	var input struct {
+		Login    string `json:"login" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	// Парсим JSON из тела запроса
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Аутентифицируем пользователя
+	user, err := h.Repository.AuthenticateUser(input.Login, input.Password)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    user,
+		"message": "Аутентификация успешна",
+	})
+}
+
+func (h *Handler) LogoutUserAPI(ctx *gin.Context) {
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Выход выполнен успешно",
+	})
+}
+
+// UpdateUserAPI - обновление только переданных полей
+func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
+	userID := uint(1) // Фиксированный пользователь
+
+	var input struct {
+		Login       *string `json:"login,omitempty"`        // указатель чтобы отличать null от ""
+		Name        *string `json:"name,omitempty"`         // указатель чтобы отличать null от ""
+		IsModerator *bool   `json:"is_moderator,omitempty"` // указатель чтобы отличать null от false
+	}
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Собираем только те поля которые переданы
+	updates := make(map[string]interface{})
+
+	if input.Login != nil {
+		updates["login"] = *input.Login
+	}
+	if input.Name != nil {
+		updates["name"] = *input.Name
+	}
+	if input.IsModerator != nil {
+		updates["is_moderator"] = *input.IsModerator
+	}
+
+	// Если ничего не передано
+	if len(updates) == 0 {
+		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("нет полей для обновления"))
+		return
+	}
+
+	user, err := h.Repository.UpdateUser(userID, updates)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    user,
+		"message": "Данные обновлены",
+	})
+}
+
+// DeleteCombustionCalculationAPI - DELETE удаление заявки
+func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
+	id := h.Repository.GetRequestID(1)
+
+	// Удаляем заявку
+	err := h.Repository.DeleteCombustionCalculation(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Заявка успешно удалена",
+	})
+}

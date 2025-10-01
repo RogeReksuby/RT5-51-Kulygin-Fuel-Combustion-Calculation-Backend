@@ -34,9 +34,15 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.POST("/fuels/:id/image", h.UploadFuelImageAPI)
 		api.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
 
-		api.GET("combustions/cart-icon", h.GetCombCartIconAPI)
+		api.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
+
+		api.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
 
 		api.POST("users/register", h.RegisterUserAPI)
+		api.GET("users/profile", h.GetUserProfileAPI)
+		api.POST("users/login", h.LoginUserAPI)
+		api.POST("users/logout", h.LogoutUserAPI)
+		api.PUT("users/profile", h.UpdateUserAPI)
 	}
 }
 
