@@ -145,7 +145,7 @@ func (h *Handler) DeleteChat(ctx *gin.Context) {
 	ctx.Redirect(http.StatusFound, "/fuels")
 }
 
-func (h *Handler) AddToCart(ctx *gin.Context) {
+func (h *Handler) AddFuelToCart(ctx *gin.Context) {
 	strId := ctx.PostForm("fuel_id")
 	id, err := strconv.Atoi(strId)
 	if err != nil {
@@ -153,8 +153,22 @@ func (h *Handler) AddToCart(ctx *gin.Context) {
 			"error": err.Error(),
 		})
 	}
-	err = h.Repository.AddToCart(uint(id))
+	err = h.Repository.AddFuelToCart(uint(id))
 	ctx.Redirect(http.StatusFound, "/fuels")
+}
+
+func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
+	idFuelStr := ctx.Param("id")
+	id, err := strconv.Atoi(idFuelStr)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+	err = h.Repository.AddFuelToCart(uint(id))
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Услуга добавлена в заявку",
+	})
 }
 
 func (h *Handler) RemoveRequest(ctx *gin.Context) {
@@ -258,5 +272,110 @@ func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 		"status":  "success",
 		"data":    updatedFuel,
 		"message": "Топливо успешно обновлено",
+	})
+}
+
+func (h *Handler) DeleteFuelAPI(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Проверяем существование записи перед удалением
+	_, err = h.Repository.GetFuel(int(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, err)
+		return
+	}
+
+	// Используем ваш существующий метод DeleteFuel (мягкое удаление)
+	err = h.Repository.DeleteFuel(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Топливо успешно удалено",
+	})
+}
+
+// UploadFuelImageAPI - REST API метод для загрузки изображения услуги
+func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Получаем файл из формы
+	file, err := ctx.FormFile("image")
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("файл изображения обязателен"))
+		return
+	}
+
+	// Загружаем изображение
+	err = h.Repository.UploadFuelImage(uint(id), file)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Получаем обновленные данные услуги
+	updatedFuel, err := h.Repository.GetFuel(int(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    updatedFuel,
+		"message": "Изображение успешно загружено",
+	})
+}
+
+func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
+
+	requestID := h.Repository.GetRequestID(1)
+	cartCount := h.Repository.GetCartCount()
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":        "success",
+		"id_combustion": requestID,
+		"items_count":   cartCount,
+	})
+}
+
+func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
+	var input struct {
+		Login       string `json:"login" binding:"required"`
+		Password    string `json:"password" binding:"required"`
+		IsModerator bool   `json:"is_moderator,omitempty"`
+		Name        string `json:"name,omitempty"`
+	}
+
+	// Парсим JSON из тела запроса
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Регистрируем пользователя
+	newUser, err := h.Repository.RegisterUser(input.Login, input.Password, input.Name, input.IsModerator)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"data":    newUser,
+		"message": "Пользователь успешно зарегистрирован",
 	})
 }

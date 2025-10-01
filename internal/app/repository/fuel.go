@@ -1,9 +1,13 @@
 package repository
 
 import (
+	"context"
 	"fmt"
+	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
+	"mime/multipart"
 	"repback/internal/app/ds"
+	"strings"
 	"time"
 )
 
@@ -76,26 +80,6 @@ func (r *Repository) GetReqFuels(requestID uint) ([]ds.Fuel, error) {
 	return fuels, nil
 }
 
-// поправь давай емае
-func (r *Repository) GetReqFuelsOld() ([]ds.Fuel, error) {
-	// имитация получения списка id топлива в заявке
-	reqs := []int{2, 4}
-	var reqFuels []ds.Fuel
-	fuels, err := r.GetFuels()
-	if err != nil {
-		return nil, err
-	}
-	for _, id := range reqs {
-		for _, fuel := range fuels {
-			if fuel.ID == id {
-				reqFuels = append(reqFuels, fuel)
-			}
-		}
-	}
-	return reqFuels, nil
-
-}
-
 func (r *Repository) GetCartCount() int64 {
 	var requestID uint
 	var count int64
@@ -115,7 +99,22 @@ func (r *Repository) GetCartCount() int64 {
 }
 
 func (r *Repository) DeleteFuel(fuelId uint) error {
-	err := r.db.Model(&ds.Fuel{}).Where("id = ?", fuelId).UpdateColumn("is_delete", true).Error
+	// Сначала получаем информацию о топливе чтобы узнать путь к изображению
+	var fuel ds.Fuel
+	err := r.db.Where("id = ?", fuelId).First(&fuel).Error
+	if err != nil {
+		return fmt.Errorf("топливо с ID %d не найдено: %w", fuelId, err)
+	}
+
+	// Удаляем изображение из MinIO если оно есть
+	if fuel.CardImage != "" {
+		if err := r.DeleteFuelImage(fuel.CardImage); err != nil {
+			// Логируем ошибку, но продолжаем удаление записи
+			logrus.Errorf("Не удалось удалить изображение для топлива %d: %v", fuelId, err)
+		}
+	}
+
+	err = r.db.Model(&ds.Fuel{}).Where("id = ?", fuelId).UpdateColumn("is_delete", true).Error
 	fmt.Println(fuelId)
 	if err != nil {
 		return fmt.Errorf("Ошибка при удалении услуги с id %d: %w", fuelId, err)
@@ -124,12 +123,10 @@ func (r *Repository) DeleteFuel(fuelId uint) error {
 	return nil
 }
 
-func (r *Repository) AddToCart(fuelID uint) error {
+func (r *Repository) AddFuelToCart(fuelID uint) error {
 	userID := 1
-	moderatorID := 2
 	var requestID uint
 	var count int64
-	//err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", userID).Select("id").First(&requestID).Error
 	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", userID, "черновик").Count(&count).Error
 	if err != nil {
 		return err
@@ -137,11 +134,9 @@ func (r *Repository) AddToCart(fuelID uint) error {
 
 	if count == 0 {
 		newReq := ds.CombustionCalculation{
-			Status:      "черновик",
-			DateCreate:  time.Now(),
-			DateUpdate:  time.Now(),
-			CreatorID:   uint(userID),
-			ModeratorID: uint(moderatorID),
+			Status:     "черновик",
+			DateCreate: time.Now(),
+			CreatorID:  uint(userID),
 		}
 		err := r.db.Create(&newReq).Error
 		if err != nil {
@@ -222,4 +217,128 @@ func (r *Repository) UpdateFuel(id uint, fuelData *ds.Fuel) error {
 	}
 
 	return nil
+}
+
+func (r *Repository) DeleteFuelImage(imagePath string) error {
+	if imagePath == "" {
+		return nil // нет изображения - ничего не делаем
+	}
+
+	// Извлекаем имя файла из пути
+	objectName := r.extractObjectName(imagePath)
+	if objectName == "" {
+		return nil
+	}
+
+	// Удаляем объект из MinIO
+	err := r.minioClient.RemoveObject(context.Background(), r.bucketName, objectName, minio.RemoveObjectOptions{})
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении изображения из MinIO: %w", err)
+	}
+
+	return nil
+}
+
+// extractObjectName - извлекает имя объекта из полного пути
+func (r *Repository) extractObjectName(imagePath string) string {
+	// Предполагаем, что путь хранится как "bucket-name/folder/image.jpg" или просто "image.jpg"
+	parts := strings.Split(imagePath, "/")
+	if len(parts) > 0 {
+		return parts[len(parts)-1] // возвращаем последнюю часть пути
+	}
+	return imagePath
+}
+
+// UploadFuelImage - загрузка/обновление изображения для услуги
+func (r *Repository) UploadFuelImage(fuelID uint, fileHeader *multipart.FileHeader) error {
+	// Проверяем существование услуги
+	var fuel ds.Fuel
+	err := r.db.Where("id = ? AND is_delete = false", fuelID).First(&fuel).Error
+	if err != nil {
+		return fmt.Errorf("услуга с ID %d не найдена", fuelID)
+	}
+
+	// Удаляем старое изображение если есть
+	if fuel.CardImage != "" {
+		if err := r.DeleteFuelImage(fuel.CardImage); err != nil {
+			logrus.Errorf("Не удалось удалить старое изображение: %v", err)
+		}
+	}
+
+	// Оставляем оригинальное название файла
+	fileName := fmt.Sprintf("fuel_%d_%s", fuelID, fileHeader.Filename)
+
+	// Открываем файл
+	file, err := fileHeader.Open()
+	if err != nil {
+		return fmt.Errorf("ошибка открытия файла: %w", err)
+	}
+	defer file.Close()
+
+	// Загружаем в MinIO
+	_, err = r.minioClient.PutObject(
+		context.Background(),
+		r.bucketName,
+		fileName,
+		file,
+		fileHeader.Size,
+		minio.PutObjectOptions{
+			ContentType: fileHeader.Header.Get("Content-Type"),
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("ошибка загрузки в MinIO: %w", err)
+	}
+
+	// Обновляем путь к изображению в базе
+	fuel.CardImage = "http://127.0.0.1:9000/ripimages/" + fileName
+	err = r.db.Save(&fuel).Error
+	if err != nil {
+		// Если не удалось сохранить в БД, удаляем из MinIO
+		r.minioClient.RemoveObject(context.Background(), r.bucketName, fileName, minio.RemoveObjectOptions{})
+		return fmt.Errorf("ошибка сохранения пути к изображению: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) RegisterUser(login, password, name string, isModerator bool) (*ds.Users, error) {
+	// Проверяем что логин не пустой
+	if login == "" {
+		return nil, fmt.Errorf("логин не может быть пустым")
+	}
+
+	// Проверяем что пароль не пустой
+	if password == "" {
+		return nil, fmt.Errorf("пароль не может быть пустым")
+	}
+
+	// Проверяем уникальность логина
+	var existingUser ds.Users
+	err := r.db.Where("login = ?", login).First(&existingUser).Error
+	if err == nil {
+		return nil, fmt.Errorf("пользователь с логином '%s' уже существует", login)
+	}
+
+	// Создаем пользователя (пароль сохраняется как есть)
+	newUser := ds.Users{
+		Login:       login,
+		Password:    password,
+		IsModerator: isModerator,
+		Name:        name,
+	}
+
+	err = r.db.Model(&ds.Users{}).Create(map[string]interface{}{
+		"login":        login,
+		"password":     password,
+		"name":         name,
+		"is_moderator": isModerator,
+	}).Error
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при создании пользователя: %w", err)
+	}
+
+	newUser.Password = ""
+
+	return &newUser, nil
 }

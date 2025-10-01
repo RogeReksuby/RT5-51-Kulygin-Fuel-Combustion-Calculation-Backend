@@ -1,2 +1,8 @@
 ServiceHost = "localhost"
 ServicePort = 8080
+
+endpoint = "localhost:9000"
+access_key = "root"
+secret_key = "rootroot"
+use_ssl = false
+bucket = "ripimages"

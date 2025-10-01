@@ -22,14 +22,21 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.GET("/fuel/:id", h.GetFuel)
 	router.GET("/combustion/:id", h.GetReqFuels)
 	router.POST("/delete-fuel", h.DeleteChat)
-	router.POST("/add-to-comb", h.AddToCart)
+	router.POST("/add-to-comb", h.AddFuelToCart)
 	router.POST("/remove-comb/:id", h.RemoveRequest)
 	api := router.Group("/api")
 	{
 		api.GET("/fuels", h.GetFuelsAPI)
-		api.GET("/fuel/:id", h.GetFuelAPI)
+		api.GET("/fuels/:id", h.GetFuelAPI)
 		api.POST("/fuels", h.CreateFuelAPI)
-		api.PUT("/fuel/:id", h.UpdateFuelAPI)
+		api.PUT("/fuels/:id", h.UpdateFuelAPI)
+		api.DELETE("/fuels/:id", h.DeleteFuelAPI)
+		api.POST("/fuels/:id/image", h.UploadFuelImageAPI)
+		api.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
+
+		api.GET("combustions/cart-icon", h.GetCombCartIconAPI)
+
+		api.POST("users/register", h.RegisterUserAPI)
 	}
 }
 
