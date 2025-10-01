@@ -24,6 +24,13 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.POST("/delete-fuel", h.DeleteChat)
 	router.POST("/add-to-comb", h.AddToCart)
 	router.POST("/remove-comb/:id", h.RemoveRequest)
+	api := router.Group("/api")
+	{
+		api.GET("/fuels", h.GetFuelsAPI)
+		api.GET("/fuel/:id", h.GetFuelAPI)
+		api.POST("/fuels", h.CreateFuelAPI)
+		api.PUT("/fuel/:id", h.UpdateFuelAPI)
+	}
 }
 
 func (h *Handler) RegisterStatic(router *gin.Engine) {

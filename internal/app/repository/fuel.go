@@ -175,3 +175,51 @@ func (r *Repository) RemoveRequest(requestID uint) error {
 	return nil
 
 }
+
+func (r *Repository) CreateFuel(fuel *ds.Fuel) error {
+	if fuel.Title == "" {
+		return fmt.Errorf("название топлива обязательно")
+	}
+
+	err := r.db.Select(
+		"Title", "Heat", "MolarMass", "CardImage",
+		"ShortDesc", "FullDesc", "IsGas", "IsDelete",
+	).Create(fuel).Error
+	if err != nil {
+		return fmt.Errorf("ошибка при создании топлива: %w", err)
+	}
+
+	return nil
+}
+
+func (r *Repository) UpdateFuel(id uint, fuelData *ds.Fuel) error {
+
+	var existingFuel ds.Fuel
+	err := r.db.Where("id = ? AND is_delete = false", id).First(&existingFuel).Error
+	if err != nil {
+		return fmt.Errorf("топливо с ID %d не найдено", id)
+	}
+
+	updates := map[string]interface{}{
+		"title":      fuelData.Title,
+		"heat":       fuelData.Heat,
+		"molar_mass": fuelData.MolarMass,
+		"card_image": fuelData.CardImage,
+		"short_desc": fuelData.ShortDesc,
+		"full_desc":  fuelData.FullDesc,
+		"is_gas":     fuelData.IsGas,
+	}
+
+	for key, value := range updates {
+		if value == "" || value == nil {
+			delete(updates, key)
+		}
+	}
+
+	err = r.db.Model(&ds.Fuel{}).Where("id = ?", id).Updates(updates).Error
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении топлива: %w", err)
+	}
+
+	return nil
+}

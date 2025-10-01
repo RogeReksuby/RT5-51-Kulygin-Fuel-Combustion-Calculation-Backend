@@ -1,13 +1,13 @@
 package ds
 
 type Fuel struct {
-	ID        int     `gorm:"primaryKey;autoIncrement"`
-	Title     string  `gorm:"type:varchar(100);not null"`
-	Heat      float64 `gorm:"type:decimal(10,2);not null"`
-	MolarMass float64 `gorm:"type:decimal(10,2);not null"`
-	CardImage string  `gorm:"type:varchar(255)"`
-	ShortDesc string  `gorm:"type:varchar(200)"`
-	FullDesc  string  `gorm:"type:text"`
-	IsGas     bool    `gorm:"type:boolean;default:false"`
-	IsDelete  bool    `gorm:"type:boolean;default:false;not null"`
+	ID        int     `gorm:"primaryKey;autoIncrement" json:"id"`
+	Title     string  `gorm:"type:varchar(100);not null" json:"title"`
+	Heat      float64 `gorm:"type:decimal(10,2);not null" json:"heat"`
+	MolarMass float64 `gorm:"type:decimal(10,2);not null" json:"molar_mass"`
+	CardImage string  `gorm:"type:varchar(255)" json:"card_image"`
+	ShortDesc string  `gorm:"type:varchar(200)" json:"short_desc"`
+	FullDesc  string  `gorm:"type:text" json:"full_desc"`
+	IsGas     bool    `gorm:"type:boolean;default:false" json:"is_gas"`
+	IsDelete  bool    `gorm:"type:boolean;default:false;not null" json:"is_delete"`
 }
