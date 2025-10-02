@@ -31,7 +31,7 @@ func StartServer() {
 	// он предоставляет доступ к данным запроса и методы для формирования ответа (например JSON)
 	r.GET("/fuels", handler.GetFuels)
 	r.GET("/fuel/:id", handler.GetFuel)
-	r.GET("/req", handler.GetReqFuels)
+	r.GET("/combustion/:id", handler.GetReqFuels)
 	r.Run()
 
 	log.Println("Server down")

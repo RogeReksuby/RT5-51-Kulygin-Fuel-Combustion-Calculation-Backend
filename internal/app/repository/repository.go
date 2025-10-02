@@ -21,9 +21,14 @@ type Fuel struct {
 	FullDesc  string
 }
 
+func (r *Repository) GetReqArrayOfID() []int {
+	reqs := []int{2, 4, 5}
+	return reqs
+}
+
 func (r *Repository) GetReqFuels() ([]Fuel, error) {
 	// имитация получения списка id топлива в заявке
-	reqs := []int{2, 4}
+	reqs := r.GetReqArrayOfID()
 	var reqFuels []Fuel
 	fuels, err := r.GetFuels()
 	if err != nil {
