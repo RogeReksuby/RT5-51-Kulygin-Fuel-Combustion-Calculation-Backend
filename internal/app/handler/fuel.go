@@ -187,7 +187,8 @@ func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 	var fuelInput struct {
 		Title     string  `json:"title" binding:"required"`
 		Heat      float64 `json:"heat" binding:"required"`
-		MolarMass float64 `json:"molar_mass" binding:"required"`
+		MolarMass float64 `json:"molar_mass,omitempty"`
+		Density   float64 `json:"density,omitempty"`
 		ShortDesc string  `json:"short_desc,omitempty"`
 		FullDesc  string  `json:"full_desc,omitempty"`
 		IsGas     bool    `json:"is_gas,omitempty"`
@@ -202,6 +203,7 @@ func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 		Title:     fuelInput.Title,
 		Heat:      fuelInput.Heat,
 		MolarMass: fuelInput.MolarMass,
+		Density:   fuelInput.Density,
 		ShortDesc: fuelInput.ShortDesc,
 		FullDesc:  fuelInput.FullDesc,
 		IsGas:     fuelInput.IsGas,

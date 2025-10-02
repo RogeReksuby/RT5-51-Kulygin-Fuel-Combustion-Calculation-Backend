@@ -175,6 +175,12 @@ func (r *Repository) CreateFuel(fuel *ds.Fuel) error {
 	if fuel.Title == "" {
 		return fmt.Errorf("название топлива обязательно")
 	}
+	if fuel.IsGas && fuel.MolarMass == 0 {
+		return fmt.Errorf("газ должен обладать молярной массой для расчетов")
+	}
+	if !fuel.IsGas && fuel.Density == 0 {
+		return fmt.Errorf("жидкое топливо должно обладать плотностью для расчета")
+	}
 
 	err := r.db.Select(
 		"Title", "Heat", "MolarMass", "CardImage",
@@ -420,6 +426,198 @@ func (r *Repository) DeleteCombustionCalculation(calculationID uint) error {
 
 	if err != nil {
 		return fmt.Errorf("ошибка при удалении заявки: %w", err)
+	}
+
+	return nil
+}
+
+// GetCombustionCalculations - получение списка заявок с фильтрацией
+func (r *Repository) GetCombustionCalculations(status, startDate, endDate string) ([]ds.CombustionCalculation, error) {
+	var calculations []ds.CombustionCalculation
+
+	fmt.Println("Параметры фильтрации:", status, startDate, endDate)
+
+	// Базовый запрос - исключаем удаленные и черновики
+	query := r.db.Where("status != ? AND status != ?", "удалён", "черновик")
+
+	// Фильтр по статусу
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	// Фильтр по дате начала
+	if startDate != "" {
+		start, err := time.Parse("2006-01-02", startDate)
+		if err == nil {
+			query = query.Where("date_create >= ?", start)
+		} else {
+			fmt.Println("Ошибка парсинга startDate:", err)
+		}
+	}
+
+	// Фильтр по дате окончания
+	if endDate != "" {
+		end, err := time.Parse("2006-01-02", endDate)
+		if err == nil {
+			query = query.Where("date_create <= ?", end.AddDate(0, 0, 1))
+		} else {
+			fmt.Println("Ошибка парсинга endDate:", err)
+		}
+	}
+
+	err := query.Preload("Creator").Preload("Moderator").Find(&calculations).Error
+	if err != nil {
+		return nil, fmt.Errorf("ошибка получения заявок: %w", err)
+	}
+
+	fmt.Println("Найдено заявок:", len(calculations))
+	return calculations, nil
+}
+
+// GetCombustionCalculationByID - получение одной заявки с услугами
+func (r *Repository) GetCombustionCalculationByID(calculationID uint) (*ds.CombustionCalculation, []ds.Fuel, error) {
+	var calculation ds.CombustionCalculation
+
+	// Загружаем заявку с создателем и модератором
+	err := r.db.
+		Preload("Creator").
+		Preload("Moderator").
+		Where("id = ?", calculationID).
+		First(&calculation).Error
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("заявка с ID %d не найдена", calculationID)
+	}
+
+	// Отдельно загружаем услуги через промежуточную таблицу
+	var fuels []ds.Fuel
+	err = r.db.
+		Table("fuels").
+		Joins("JOIN combustions_fuels ON fuels.id = combustions_fuels.fuel_id").
+		Where("combustions_fuels.request_id = ?", calculationID).
+		Find(&fuels).Error
+
+	if err != nil {
+		return nil, nil, fmt.Errorf("ошибка загрузки услуг: %w", err)
+	}
+
+	return &calculation, fuels, nil
+}
+
+// UpdateCombustionMolarVolume - обновление MolarVolume только для черновиков
+func (r *Repository) UpdateCombustionMolarVolume(calculationID uint, molarVolume float64) error {
+	// Проверяем что заявка существует и в статусе черновика
+	var calculation ds.CombustionCalculation
+	err := r.db.Where("id = ? AND status = ?", calculationID, "черновик").First(&calculation).Error
+	if err != nil {
+		return fmt.Errorf("заявка-черновик с ID %d не найдена", calculationID)
+	}
+
+	// Обновляем только MolarVolume и дату обновления
+	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(map[string]interface{}{
+		"molar_volume": molarVolume,
+		"date_update":  time.Now(),
+	}).Error
+
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении заявки: %w", err)
+	}
+
+	return nil
+}
+
+// FormCombustionCalculation - формирование заявки создателем
+func (r *Repository) FormCombustionCalculation(calculationID uint) error {
+	var calculation ds.CombustionCalculation
+
+	// Проверяем что заявка существует и в статусе черновика
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ? AND status = ?", calculationID, "черновик").
+		First(&calculation).Error
+
+	if err != nil {
+		return fmt.Errorf("заявка-черновик с ID %d не найдена", calculationID)
+	}
+
+	// Проверяем обязательные поля
+	if calculation.MolarVolume == 0 {
+		return fmt.Errorf("поле MolarVolume обязательно для формирования заявки")
+	}
+
+	var countFuelsAtCalculation int64
+	err = r.db.Model(&ds.CombustionsFuels{}).Where("request_id = ?", calculationID).Count(&countFuelsAtCalculation).Error
+
+	if countFuelsAtCalculation == 0 {
+		return fmt.Errorf("добавьте хотя бы одну услугу для формирования заявки")
+	}
+
+	// Обновляем статус и дату формирования
+	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(map[string]interface{}{
+		"status":      "сформирован",
+		"date_update": time.Now(),
+	}).Error
+
+	if err != nil {
+		return fmt.Errorf("ошибка при формировании заявки: %w", err)
+	}
+
+	return nil
+}
+
+// CompleteOrRejectCombustion - завершение/отклонение модератором
+func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID uint, isComplete bool) error {
+	var calculation ds.CombustionCalculation
+	fmt.Println("iscomplete", isComplete)
+	// Проверяем что заявка существует и в статусе "сформирована"
+	err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ? AND status = ?", calculationID, "сформирован").First(&calculation).Error
+
+	if err != nil {
+		return fmt.Errorf("сформированная заявка с ID %d не найдена", calculationID)
+	}
+
+	// Определяем новый статус
+	var newStatus string
+	if isComplete {
+		newStatus = "завершён"
+	} else {
+		newStatus = "отклонён"
+	}
+	updates := map[string]interface{}{
+		"status":       newStatus,
+		"date_update":  time.Now(),
+		"date_finish":  time.Now(),
+		"moderator_id": moderatorID,
+	}
+	// Рассчитываем FinalResult если завершаем
+	if isComplete {
+
+		var totalEnergy float64
+		var fuelComb []ds.CombustionsFuels
+		err = r.db.Where("request_id = ?", calculationID).Find(&fuelComb).Error
+		if err != nil {
+			return fmt.Errorf("ошибка получения данных об услугах: %w", err)
+		}
+
+		for _, fuelFromComb := range fuelComb {
+			var fuel ds.Fuel
+			var res float64
+			err = r.db.Where("id = ?", fuelFromComb.FuelID).Find(&fuel).Error
+			if err != nil {
+				return fmt.Errorf("ошибка получения данных об услугах: %w", err)
+			}
+			if fuel.IsGas {
+				res = fuel.Heat * fuel.MolarMass * fuelFromComb.FuelVolume / (1000 * calculation.MolarVolume)
+			} else {
+				res = fuel.Heat * fuel.Density * fuelFromComb.FuelVolume / 1000
+			}
+			r.db.Model(&ds.CombustionsFuels{}).Where("id = ?", fuelFromComb.ID).Update("intermediate_energies", res)
+			totalEnergy = totalEnergy + res
+		}
+		updates["final_result"] = totalEnergy
+	}
+
+	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(updates).Error
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении заявки: %w", err)
 	}
 
 	return nil
