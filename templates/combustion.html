@@ -29,47 +29,49 @@
 </div>
 
 <div class="titleReq">Состав заявки</div>
-<div class="buttonsReq">
-    <button class="bButton" style="width: 50%">
-        Оформить заявку
-    </button>
-    <button class="wButton" style="width: 50%">
-        Удалить заявку
-    </button>
+
+
+
+
+
+<div class="resFrameReq">
+    Молярный объем (22.4 для н.у.):
+    <input class="volumeSpaceReq" type="text" value="{{.data_fuel_page.MolarVolume}}" />
 </div>
 
-{{ range .fuels }}
-<div class="cardAllReq">
-    <div class="cardTopReq">
-        <div class="cardReq" style="background:linear-gradient(0deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)) , url({{ .CardImage }}) center/cover no-repeat;*/">
-            <div class="titleButtonCardReq">
-                <div class="titleCardReq">
-                    {{ .Title }}
-                </div>
-                <div class="buttonFrameCardBox">
-                    <a href="/fuel/{{ .ID}}">
-                        <button class="bButton">
-                            Подробнее>
-                        </button>
-                    </a>
+<table class="fuels-table">
+    <thead>
+    <tr>
+        <th>Топливо</th>
+        <th>Объём (л)</th>
+        <th>Выделение энергии (кДж)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {{ range .fuels }}
+    <tr class="fuel-row">
+        <td class="fuel-cell">
+            <div class="cardReq" style="background: linear-gradient(0deg, rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.3)), url({{ .CardImage }}) center/cover no-repeat;">
+                <div class="titleButtonCardReq">
+                    <div class="titleCardReq">{{ .Title }}</div>
+                    <div class="buttonFrameCardBox">
+                        <a href="/fuel/{{ .ID }}">
+                            <button class="bButton">Подробнее ></button>
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="blankFrameCardReq"></div>
-        </div>
-        <div class="volumeSpaceFrameReq">
-            <input class="volumeSpaceReq" type="text" placeholder="Введите объем топлива"/>
-            (л)
-        </div>
-
-
-    </div>
-    <div class="resFrameCardReq">
-        Выделение энергии (кДж):
-        <div class="resCardReq"></div>
-    </div>
-</div>
-{{ end }}
-
+        </td>
+        <td class="volume-cell">
+            <input class="volumeSpaceReq" type="text" placeholder="Объём" />
+        </td>
+        <td class="result-cell">
+            <div class="resCardReq">—</div>
+        </td>
+    </tr>
+    {{ end }}
+    </tbody>
+</table>
 
 <div class="resFrameReq">
     Суммарное выделение энергии (кДж):

@@ -61,8 +61,15 @@ func (h *Handler) GetReqFuels(ctx *gin.Context) {
 		logrus.Error(err)
 	}
 
+	var data = struct {
+		MolarVolume float64
+	}{
+		MolarVolume: 22.4,
+	}
+
 	ctx.HTML(http.StatusOK, "combustion.html", gin.H{
-		"fuels": fuels,
+		"fuels":          fuels,
+		"data_fuel_page": data,
 	})
 }
 

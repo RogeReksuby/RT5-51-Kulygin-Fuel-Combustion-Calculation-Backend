@@ -105,27 +105,16 @@
 }
 
 .cardAllReq {
-    /* cardAllReq */
-
-    /* Auto layout */
     box-sizing: border-box;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
     align-items: center;
-    padding: 10px;
-    gap: 10px;
-
+    padding: 15px;
+    gap: 24px;
     width: 100%;
-    height: 321px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 3;
-    align-self: stretch;
-    flex-grow: 0;
-
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
 
 .cardTopReq {
@@ -152,107 +141,72 @@
 
 }
 
-.cardReq {
-    /* cardReq */
+.fuels-table {
+    width: 100%;
+    border-collapse: collapse; /* убирает двойные границы */
+    font-family: 'Manrope', sans-serif;
+    color: #203563;
+}
 
-    /* Auto layout */
-    box-sizing: border-box;
+.fuels-table {
+    width: 100%;
+    border-collapse: collapse; /* убирает двойные границы */
+    font-family: 'Manrope', sans-serif;
+    color: #203563;
+}
+
+.fuels-table tbody tr:not(:last-child) td {
+    padding-bottom: 20px; /* отступ между строками */
+}
+
+.fuels-table td {
+    padding: 16px 12px;
+    vertical-align: middle;
+    border: none;
+    background: transparent;
+}
+
+.fuel-cell {
+    width: 40%; /* регулируй по желанию */
+}
+
+
+
+/* Блок с изображением */
+.cardReq {
+    width: 320px;
+    height: 70px;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    padding: 10px;
-    gap: 10px;
-
-    width: 400px;
-    height: 200px;
-    min-height: 200px;
-
-    border-radius: 15px;
-
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    flex-grow: 0;
-
+    justify-content: flex-end;
+    padding: 12px;
+    color: white;
 }
 
 .titleButtonCardReq {
-    /* titleButtonCardReq */
-
-    /* Auto layout */
-    box-sizing: border-box;
     display: flex;
-    flex-direction: row;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    padding: 10px;
-    gap: 10px;
-
-    width: 380px;
-    height: 93px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    align-self: stretch;
-    flex-grow: 0;
-
+    width: 100%;
 }
 
 .titleCardReq {
-    /* titleCardReq */
-
-    /* Auto layout */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    padding: 20px 10px;
-    gap: 10px;
-
-    width: 180px;
-    height: 73px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 0;
-    align-self: stretch;
-    flex-grow: 1;
-
     font-family: 'Manrope';
-    font-style: normal;
     font-weight: 700;
-    font-size: 24px;
-    line-height: 33px;
-    /* identical to box height */
-
+    font-size: 20px;
     color: #FFFFFF;
-
-
+    text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+    width: auto;
+    height: auto;
+    padding: 0;
+    display: block;
 }
 
 .buttonFrameCardBox {
-    /* buttonFrameCardReq */
-
-    /* Auto layout */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    padding: 10px;
-    gap: 10px;
-
-    width: 170px;
-    height: 71px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 1;
-    flex-grow: 0;
-
+    width: auto;
+    height: auto;
+    padding: 0;
 }
 
 .blankFrameCardReq {
@@ -268,7 +222,7 @@
     gap: 10px;
 
     width: 380px;
-    height: 77px;
+
 
 
     /* Inside auto layout */
@@ -280,35 +234,15 @@
 }
 
 .volumeSpaceFrameReq {
-    /* volumeSpaceFrameReq */
-
-    /* Auto layout */
-    box-sizing: border-box;
     display: flex;
     flex-direction: row;
-    align-items: flex-start;
-    padding: 10px;
-    gap: 10px;
-
-    width: 50%;
-    height: 75px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 1;
-    flex-grow: 0;
-
+    align-items: center;
+    gap: 8px;
     font-family: 'Manrope';
-    font-style: normal;
     font-weight: 800;
-    font-size: 40px;
-    line-height: 55px;
-    /* identical to box height */
-
+    font-size: 24px;
     color: #203563;
-
-
+    white-space: nowrap;
 }
 
 .volumeSpaceReq {
@@ -347,61 +281,22 @@
 }
 
 .resFrameCardReq {
-    /* resFrameCardReq */
-
-    /* Auto layout */
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 200px;
-    gap: 10px;
-
-    width: 100%;
-    height: 71px;
-
-
-    /* Inside auto layout */
-    flex: none;
-    order: 1;
-    align-self: stretch;
-    flex-grow: 0;
-
     font-family: 'Manrope';
-    font-style: normal;
     font-weight: 800;
-    font-size: 32px;
-    line-height: 44px;
-    /* identical to box height */
-
+    font-size: 24px;
     color: #203563;
-
-
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .resCardReq {
-    /* resCardReq */
-
-    box-sizing: border-box;
-
-    /* Auto layout */
+    width: 300px;
+    height: 40px;
     display: flex;
-    flex-direction: column;
-    justify-content: center;
     align-items: center;
-    padding: 0px 10px;
-    gap: 10px;
-
-    width: 50%;
-    height: 51px;
-
+    justify-content: center;
     border: 2px solid #0F94CF;
     border-radius: 5px;
-
-    /* Inside auto layout */
-    flex: none;
-    order: 1;
-    flex-grow: 1;
-
+    font-weight: 800;
 }
