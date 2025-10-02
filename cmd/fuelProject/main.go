@@ -22,14 +22,13 @@ func main() {
 	fmt.Println(postgresString)
 	logrus.Infof("MinIO Config: endpoint=%s, access_key=%s, bucket=%s",
 		conf.MinIOEndpoint, conf.MinIOAccessKey, conf.MinIOBucket)
-	// Инициализация MinIO клиента
+
 	minioClient, err := conf.InitMinIO()
 	if err != nil {
 		logrus.Fatalf("error initializing MinIO: %v", err)
 	}
 	logrus.Info("MinIO client initialized successfully")
 
-	// Создаем репозиторий с MinIO клиентом
 	rep, errRep := repository.New(postgresString, minioClient, conf.MinIOBucket)
 	if errRep != nil {
 		logrus.Fatalf("error creating repository: %v", errRep)

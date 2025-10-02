@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"repback/internal/app/ds"
@@ -25,7 +26,6 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Преобразуем в response структуру с логинами
 	response := make([]ds.CombustionResponse, len(calculations))
 	for i, calc := range calculations {
 		response[i] = ds.CombustionResponse{
@@ -38,12 +38,12 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 			FinalResult:  calc.FinalResult,
 		}
 
-		// Дата завершения (если есть)
+		// дата завершения если есть
 		if calc.DateFinish.Valid {
 			response[i].DateFinish = calc.DateFinish.Time.Format("02.01.2006")
 		}
 
-		// Логин модератора (если есть)
+		// логин модератора если есть
 		if calc.Moderator.ID != 0 {
 			response[i].ModeratorLogin = calc.Moderator.Login
 		}
@@ -56,7 +56,6 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 	})
 }
 
-// GetCombustionCalculationAPI - GET одной заявки с услугами
 func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -65,7 +64,6 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Получаем заявку и услуги отдельно
 	calculation, fuels, err := h.Repository.GetCombustionCalculationByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusNotFound, err)
@@ -91,20 +89,17 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 		CreatorLogin: calculation.Creator.Login,
 		MolarVolume:  calculation.MolarVolume,
 		FinalResult:  calculation.FinalResult,
-		Fuels:        make([]ds.Fuel, len(fuels)), // используем отдельно загруженные fuels
+		Fuels:        make([]ds.Fuel, len(fuels)),
 	}
 
-	// Дата завершения (если есть)
 	if calculation.DateFinish.Valid {
 		response.DateFinish = calculation.DateFinish.Time.Format("02.01.2006")
 	}
 
-	// Логин модератора (если есть)
 	if calculation.Moderator.ID != 0 {
 		response.ModeratorLogin = calculation.Moderator.Login
 	}
 
-	// Заполняем услуги
 	for i, fuel := range fuels {
 		response.Fuels[i] = ds.Fuel{
 			ID:        fuel.ID,
@@ -124,7 +119,6 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
-// UpdateCombustionMolarVolumeAPI - PUT изменение MolarVolume
 func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -142,14 +136,12 @@ func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Обновляем MolarVolume
 	err = h.Repository.UpdateCombustionMolarVolume(uint(id), input.MolarVolume)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err) // 400 т.к. бизнес-логика не прошла
 		return
 	}
 
-	// Получаем обновленную заявку для ответа
 	updatedCalculation, _, err := h.Repository.GetCombustionCalculationByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
@@ -163,7 +155,6 @@ func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 	})
 }
 
-// FormCombustionCalculationAPI - PUT формирование заявки
 func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -172,14 +163,12 @@ func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Формируем заявку
 	err = h.Repository.FormCombustionCalculation(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
 	}
 
-	// Получаем обновленную заявку для ответа
 	updatedCalculation, fuels, err := h.Repository.GetCombustionCalculationByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
@@ -194,7 +183,6 @@ func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
-// CompleteOrRejectCombustionAPI - PUT завершение/отклонение заявки
 func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -241,10 +229,9 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 
 // RemoveFuelFromCombustionAPI - DELETE удаление услуги из заявки
 func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
-	// Получаем ID заявки из URL
+
 	calculationID := h.Repository.GetRequestID(1)
 
-	// Получаем ID услуги из query параметра или тела
 	fuelIDStr := ctx.Query("fuel_id")
 	fuelID, err := strconv.Atoi(fuelIDStr)
 	if err != nil {
@@ -252,7 +239,6 @@ func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Удаляем услугу из заявки
 	err = h.Repository.RemoveFuelFromCombustion(uint(calculationID), uint(fuelID))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
@@ -267,7 +253,7 @@ func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 
 // UpdateFuelInCombustionAPI - PUT изменение данных в связи м-м
 func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
-	// Получаем ID заявки из URL
+
 	calculationID := h.Repository.GetRequestID(1)
 
 	var input struct {
@@ -280,7 +266,6 @@ func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 		return
 	}
 
-	// Обновляем данные в связи
 	err = h.Repository.UpdateFuelInCombustion(uint(calculationID), input.FuelID, input.FuelVolume)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
@@ -290,5 +275,382 @@ func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Данные услуги в заявке обновлены",
+	})
+}
+
+// DeleteCombustionCalculationAPI - DELETE удаление заявки
+func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
+	id := h.Repository.GetRequestID(1)
+
+	err := h.Repository.DeleteCombustionCalculation(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Заявка успешно удалена",
+	})
+}
+
+// UpdateUserAPI - обновление только переданных полей
+func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
+	userID := uint(1)
+
+	var input struct {
+		Login       *string `json:"login,omitempty"`
+		Name        *string `json:"name,omitempty"`
+		IsModerator *bool   `json:"is_moderator,omitempty"`
+	}
+
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	updates := make(map[string]interface{})
+
+	if input.Login != nil {
+		updates["login"] = *input.Login
+	}
+	if input.Name != nil {
+		updates["name"] = *input.Name
+	}
+	if input.IsModerator != nil {
+		updates["is_moderator"] = *input.IsModerator
+	}
+
+	if len(updates) == 0 {
+		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("нет полей для обновления"))
+		return
+	}
+
+	user, err := h.Repository.UpdateUser(userID, updates)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    user,
+		"message": "Данные обновлены",
+	})
+}
+
+// LoginUserAPI - REST API метод для аутентификации пользователя
+func (h *Handler) LoginUserAPI(ctx *gin.Context) {
+	var input struct {
+		Login    string `json:"login" binding:"required"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	// Парсим JSON из тела запроса
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Аутентифицируем пользователя
+	user, err := h.Repository.AuthenticateUser(input.Login, input.Password)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    user,
+		"message": "Аутентификация успешна",
+	})
+}
+
+func (h *Handler) LogoutUserAPI(ctx *gin.Context) {
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Выход выполнен успешно",
+	})
+}
+
+// UploadFuelImageAPI - REST API метод для загрузки изображения услуги
+func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Получаем файл из формы
+	file, err := ctx.FormFile("image")
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("файл изображения обязателен"))
+		return
+	}
+
+	// Загружаем изображение
+	err = h.Repository.UploadFuelImage(uint(id), file)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	// Получаем обновленные данные услуги
+	updatedFuel, err := h.Repository.GetFuel(int(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    updatedFuel,
+		"message": "Изображение успешно загружено",
+	})
+}
+
+func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
+
+	requestID := h.Repository.GetRequestID(1)
+	cartCount := h.Repository.GetCartCount()
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":        "success",
+		"id_combustion": requestID,
+		"items_count":   cartCount,
+	})
+}
+
+func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
+	var input struct {
+		Login       string `json:"login" binding:"required"`
+		Password    string `json:"password" binding:"required"`
+		IsModerator bool   `json:"is_moderator,omitempty"`
+		Name        string `json:"name,omitempty"`
+	}
+
+	// Парсим JSON из тела запроса
+	if err := ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Регистрируем пользователя
+	newUser, err := h.Repository.RegisterUser(input.Login, input.Password, input.Name, input.IsModerator)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"data":    newUser,
+		"message": "Пользователь успешно зарегистрирован",
+	})
+}
+
+func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
+	// В реальном приложении ID пользователя берется из JWT токена или сессии
+	// Для лабораторной работы используем фиксированного пользователя
+	userID := uint(1) // Фиксированный ID пользователя
+
+	user, err := h.Repository.GetUserProfile(userID)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   user,
+	})
+}
+
+func (h *Handler) DeleteFuelAPI(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Проверяем существование записи перед удалением
+	_, err = h.Repository.GetFuel(int(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, err)
+		return
+	}
+
+	// Используем ваш существующий метод DeleteFuel (мягкое удаление)
+	err = h.Repository.DeleteFuel(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Топливо успешно удалено",
+	})
+}
+
+func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
+
+	idFuelStr := ctx.Param("id")
+	id, err := strconv.Atoi(idFuelStr)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	var fuelInput struct {
+		Title     string  `json:"title,omitempty"`
+		Heat      float64 `json:"heat,omitempty"`
+		MolarMass float64 `json:"molar_mass,omitempty"`
+		CardImage string  `json:"card_image,omitempty"`
+		ShortDesc string  `json:"short_desc,omitempty"`
+		FullDesc  string  `json:"full_desc,omitempty"`
+		IsGas     bool    `json:"is_gas,omitempty"`
+	}
+
+	if err := ctx.ShouldBindJSON(&fuelInput); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	updateData := ds.Fuel{
+		Title:     fuelInput.Title,
+		Heat:      fuelInput.Heat,
+		MolarMass: fuelInput.MolarMass,
+		CardImage: fuelInput.CardImage,
+		ShortDesc: fuelInput.ShortDesc,
+		FullDesc:  fuelInput.FullDesc,
+		IsGas:     fuelInput.IsGas,
+	}
+
+	err = h.Repository.UpdateFuel(uint(id), &updateData)
+	if err != nil {
+		fmt.Println("grg1")
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	updatedFuel, err := h.Repository.GetFuel(int(id))
+	if err != nil {
+		fmt.Println("grg2")
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+	fmt.Println("grg3")
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"data":    updatedFuel,
+		"message": "Топливо успешно обновлено",
+	})
+}
+
+func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
+	var fuelInput struct {
+		Title     string  `json:"title" binding:"required"`
+		Heat      float64 `json:"heat" binding:"required"`
+		MolarMass float64 `json:"molar_mass,omitempty"`
+		Density   float64 `json:"density,omitempty"`
+		ShortDesc string  `json:"short_desc,omitempty"`
+		FullDesc  string  `json:"full_desc,omitempty"`
+		IsGas     bool    `json:"is_gas,omitempty"`
+	}
+
+	if err := ctx.ShouldBindJSON(&fuelInput); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	newFuel := ds.Fuel{
+		Title:     fuelInput.Title,
+		Heat:      fuelInput.Heat,
+		MolarMass: fuelInput.MolarMass,
+		Density:   fuelInput.Density,
+		ShortDesc: fuelInput.ShortDesc,
+		FullDesc:  fuelInput.FullDesc,
+		IsGas:     fuelInput.IsGas,
+	}
+
+	err := h.Repository.CreateFuel(&newFuel)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, gin.H{
+		"status":  "success",
+		"data":    newFuel,
+		"message": "Топливо успешно создано",
+	})
+}
+
+func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
+	idFuelStr := ctx.Param("id")
+	id, err := strconv.Atoi(idFuelStr)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+	err = h.Repository.AddFuelToCart(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Услуга добавлена в заявку",
+	})
+}
+
+func (h *Handler) GetFuelAPI(ctx *gin.Context) {
+	idFuelStr := ctx.Param("id")
+	idFuel, err := strconv.Atoi(idFuelStr)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	fuel, err := h.Repository.GetFuel(idFuel)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   fuel,
+	})
+}
+
+func (h *Handler) GetFuelsAPI(ctx *gin.Context) {
+	var fuels []ds.Fuel
+	var err error
+
+	searchString := ctx.Query("title")
+
+	if searchString == "" {
+		fuels, err = h.Repository.GetFuels()
+		if err != nil {
+			h.errorHandler(ctx, http.StatusInternalServerError, err)
+			return
+		}
+	} else {
+		fuels, err = h.Repository.GetFuelsByTitle(searchString)
+		if err != nil {
+			h.errorHandler(ctx, http.StatusInternalServerError, err)
+			return
+		}
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status": "success",
+		"data":   fuels,
+		"count":  len(fuels),
 	})
 }

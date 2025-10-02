@@ -453,7 +453,7 @@ func (r *Repository) GetCombustionCalculations(status, startDate, endDate string
 
 	// Фильтр по дате начала
 	if startDate != "" {
-		start, err := time.Parse("2006-01-02", startDate)
+		start, err := time.Parse("02.01.2006", startDate)
 		if err == nil {
 			query = query.Where("date_create >= ?", start)
 		} else {
@@ -463,7 +463,7 @@ func (r *Repository) GetCombustionCalculations(status, startDate, endDate string
 
 	// Фильтр по дате окончания
 	if endDate != "" {
-		end, err := time.Parse("2006-01-02", endDate)
+		end, err := time.Parse("02.01.2006", endDate)
 		if err == nil {
 			query = query.Where("date_create <= ?", end.AddDate(0, 0, 1))
 		} else {
