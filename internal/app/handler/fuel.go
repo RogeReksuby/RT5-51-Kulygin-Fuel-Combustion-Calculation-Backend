@@ -165,6 +165,10 @@ func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
 		return
 	}
 	err = h.Repository.AddFuelToCart(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Услуга добавлена в заявку",

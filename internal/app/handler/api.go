@@ -238,3 +238,57 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 		"message": message,
 	})
 }
+
+// RemoveFuelFromCombustionAPI - DELETE удаление услуги из заявки
+func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
+	// Получаем ID заявки из URL
+	calculationID := h.Repository.GetRequestID(1)
+
+	// Получаем ID услуги из query параметра или тела
+	fuelIDStr := ctx.Query("fuel_id")
+	fuelID, err := strconv.Atoi(fuelIDStr)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Удаляем услугу из заявки
+	err = h.Repository.RemoveFuelFromCombustion(uint(calculationID), uint(fuelID))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Услуга удалена из заявки",
+	})
+}
+
+// UpdateFuelInCombustionAPI - PUT изменение данных в связи м-м
+func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
+	// Получаем ID заявки из URL
+	calculationID := h.Repository.GetRequestID(1)
+
+	var input struct {
+		FuelID     uint    `json:"fuel_id" binding:"required"`
+		FuelVolume float64 `json:"fuel_volume" binding:"required"`
+	}
+	var err error
+	if err = ctx.ShouldBindJSON(&input); err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	// Обновляем данные в связи
+	err = h.Repository.UpdateFuelInCombustion(uint(calculationID), input.FuelID, input.FuelVolume)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Данные услуги в заявке обновлены",
+	})
+}

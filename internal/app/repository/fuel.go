@@ -154,6 +154,12 @@ func (r *Repository) AddFuelToCart(fuelID uint) error {
 		FuelID:    fuelID,
 	}
 
+	var isDelete bool
+	r.db.Model(&ds.Fuel{}).Where("id = ?", fuelID).Select("is_delete").First(&isDelete)
+	if isDelete {
+		return fmt.Errorf("Услуга удалена, невозможно добавить в заявку")
+	}
+
 	err = r.db.Create(&newFuelReq).Error
 	if err != nil {
 		return err
@@ -618,6 +624,71 @@ func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID 
 	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(updates).Error
 	if err != nil {
 		return fmt.Errorf("ошибка при обновлении заявки: %w", err)
+	}
+
+	return nil
+}
+
+// RemoveFuelFromCombustion - удаление услуги из заявки
+func (r *Repository) RemoveFuelFromCombustion(calculationID uint, fuelID uint) error {
+	// Проверяем что заявка существует и в статусе черновика
+	var calculation ds.CombustionCalculation
+	err := r.db.Where("id = ? AND status = ?", calculationID, "черновик").First(&calculation).Error
+	if err != nil {
+		return fmt.Errorf("заявка-черновик с ID %d не найдена", calculationID)
+	}
+
+	// Проверяем что услуга существует
+	var fuel ds.Fuel
+	err = r.db.Where("id = ? AND is_delete = false", fuelID).First(&fuel).Error
+	if err != nil {
+		return fmt.Errorf("услуга с ID %d не найдена", fuelID)
+	}
+
+	var count int64
+	err = r.db.Model(&ds.CombustionsFuels{}).Where("request_id = ? AND fuel_id = ?", calculationID, fuelID).Count(&count).Error
+	if err != nil || count == 0 {
+		return fmt.Errorf("услуга с ID %d в заявке с ID %d не найдена", fuelID, calculationID)
+	}
+
+	// Удаляем связь из промежуточной таблицы
+	err = r.db.Where("request_id = ? AND fuel_id = ?", calculationID, fuelID).Delete(&ds.CombustionsFuels{}).Error
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении услуги из заявки: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateFuelInCombustion - изменение данных в связи м-м
+func (r *Repository) UpdateFuelInCombustion(calculationID uint, fuelID uint, fuelVolume float64) error {
+	// Проверяем что заявка существует и в статусе черновика
+	var calculation ds.CombustionCalculation
+	err := r.db.Where("id = ? AND status = ?", calculationID, "черновик").First(&calculation).Error
+	if err != nil {
+		return fmt.Errorf("заявка-черновик с ID %d не найдена", calculationID)
+	}
+
+	// Проверяем что услуга существует
+	var fuel ds.Fuel
+	err = r.db.Where("id = ? AND is_delete = false", fuelID).First(&fuel).Error
+	if err != nil {
+		return fmt.Errorf("услуга с ID %d не найдена", fuelID)
+	}
+
+	// Проверяем что связь существует
+	var combustionFuel ds.CombustionsFuels
+	err = r.db.Where("request_id = ? AND fuel_id = ?", calculationID, fuelID).First(&combustionFuel).Error
+	if err != nil {
+		return fmt.Errorf("услуга не найдена в заявке")
+	}
+
+	err = r.db.Model(&ds.CombustionsFuels{}).
+		Where("request_id = ? AND fuel_id = ?", calculationID, fuelID).
+		Update("fuel_volume", fuelVolume).Error
+
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении услуги в заявке: %w", err)
 	}
 
 	return nil

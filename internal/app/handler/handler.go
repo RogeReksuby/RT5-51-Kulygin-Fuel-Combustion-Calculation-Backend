@@ -42,6 +42,9 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)
 		api.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
 
+		api.DELETE("fuel-combustions", h.RemoveFuelFromCombustionAPI)
+		api.PUT("fuel-combustions", h.UpdateFuelInCombustionAPI)
+
 		api.POST("users/register", h.RegisterUserAPI)
 		api.GET("users/profile", h.GetUserProfileAPI)
 		api.POST("users/login", h.LoginUserAPI)
