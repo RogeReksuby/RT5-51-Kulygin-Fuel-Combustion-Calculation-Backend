@@ -6,8 +6,8 @@ type CombustionsFuels struct {
 	RequestID uint `gorm:"not null;uniqueIndex:idx_request_fuel"`
 	FuelID    uint `gorm:"not null;uniqueIndex:idx_request_fuel"`
 
-	FuelVolume           float64 `gorm:"type:decimal(10,4)"`
-	IntermediateEnergies float64 `gorm:"type:decimal(15,4)"`
+	FuelVolume           float64 `gorm:"type:decimal(10,4);default:null"`
+	IntermediateEnergies float64 `gorm:"type:decimal(15,4);default:null"`
 
 	Request CombustionCalculation `gorm:"foreignKey:RequestID"`
 	Fuel    Fuel                  `gorm:"foreignKey:FuelID"`

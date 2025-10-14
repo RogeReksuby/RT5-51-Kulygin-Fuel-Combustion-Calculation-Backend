@@ -50,9 +50,7 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   response,
-		"count":  len(response),
+		"data": response,
 	})
 }
 
@@ -114,8 +112,7 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   response,
+		"data": response,
 	})
 }
 
@@ -149,7 +146,6 @@ func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    updatedCalculation,
 		"message": "MolarVolume успешно обновлен",
 	})
@@ -176,7 +172,6 @@ func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    updatedCalculation,
 		"fuels":   fuels,
 		"message": "Заявка успешно сформирована",
@@ -220,7 +215,6 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    updatedCalculation,
 		"fuels":   fuels,
 		"message": message,
@@ -246,7 +240,6 @@ func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Услуга удалена из заявки",
 	})
 }
@@ -273,7 +266,6 @@ func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Данные услуги в заявке обновлены",
 	})
 }
@@ -289,7 +281,6 @@ func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Заявка успешно удалена",
 	})
 }
@@ -333,7 +324,6 @@ func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    user,
 		"message": "Данные обновлены",
 	})
@@ -360,7 +350,6 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    user,
 		"message": "Аутентификация успешна",
 	})
@@ -369,7 +358,6 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 func (h *Handler) LogoutUserAPI(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Выход выполнен успешно",
 	})
 }
@@ -405,7 +393,6 @@ func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    updatedFuel,
 		"message": "Изображение успешно загружено",
 	})
@@ -417,7 +404,6 @@ func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
 	cartCount := h.Repository.GetCartCount()
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":        "success",
 		"id_combustion": requestID,
 		"items_count":   cartCount,
 	})
@@ -445,7 +431,6 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
 		"data":    newUser,
 		"message": "Пользователь успешно зарегистрирован",
 	})
@@ -463,8 +448,7 @@ func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   user,
+		"data": user,
 	})
 }
 
@@ -491,7 +475,6 @@ func (h *Handler) DeleteFuelAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Топливо успешно удалено",
 	})
 }
@@ -545,7 +528,6 @@ func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 	}
 	fmt.Println("grg3")
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"data":    updatedFuel,
 		"message": "Топливо успешно обновлено",
 	})
@@ -584,7 +566,6 @@ func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusCreated, gin.H{
-		"status":  "success",
 		"data":    newFuel,
 		"message": "Топливо успешно создано",
 	})
@@ -603,7 +584,6 @@ func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, gin.H{
-		"status":  "success",
 		"message": "Услуга добавлена в заявку",
 	})
 }
@@ -623,11 +603,17 @@ func (h *Handler) GetFuelAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   fuel,
+		"data": fuel,
 	})
 }
 
+// GetFuelsAPI returns a list of fuels
+// @Summary Получить список топлива
+// @Description Возвращает все виды топлива. Поддерживается фильтрация по названию через query-параметр ?title=...
+// @Tags fuels
+// @Produce json
+// @Param title query string false "Фильтр по названию топлива (частичное совпадение)"
+// @Router /fuels [get]
 func (h *Handler) GetFuelsAPI(ctx *gin.Context) {
 	var fuels []ds.Fuel
 	var err error
@@ -649,8 +635,7 @@ func (h *Handler) GetFuelsAPI(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
-		"status": "success",
-		"data":   fuels,
-		"count":  len(fuels),
+		"data":  fuels,
+		"count": len(fuels),
 	})
 }

@@ -3,8 +3,12 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"repback/internal/app/repository"
 )
+
+import _ "repback/cmd/fuelProject/docs"
 
 type Handler struct {
 	// то есть первое - имя поля структуры, второе - указатель на Repository из пакета repository
@@ -18,6 +22,7 @@ func NewHandler(r *repository.Repository) *Handler {
 }
 
 func (h *Handler) RegisterHandler(router *gin.Engine) {
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 	router.GET("/fuels", h.GetFuels)
 	router.GET("/fuel/:id", h.GetFuel)
 	router.GET("/combustion/:id", h.GetReqFuels)
