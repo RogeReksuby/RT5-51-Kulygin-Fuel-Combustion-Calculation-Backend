@@ -448,13 +448,17 @@ func (r *Repository) DeleteCombustionCalculation(calculationID uint) error {
 }
 
 // GetCombustionCalculations - получение списка заявок с фильтрацией
-func (r *Repository) GetCombustionCalculations(status, startDate, endDate string) ([]ds.CombustionCalculation, error) {
+func (r *Repository) GetCombustionCalculations(userID uint, userIsModerator bool, status, startDate, endDate string) ([]ds.CombustionCalculation, error) {
 	var calculations []ds.CombustionCalculation
 
 	fmt.Println("Параметры фильтрации:", status, startDate, endDate)
 
 	// Базовый запрос - исключаем удаленные и черновики
 	query := r.db.Where("status != ? AND status != ?", "удалён", "черновик")
+
+	if !userIsModerator {
+		query = query.Where("creator_id = ?", userID)
+	}
 
 	// Фильтр по статусу
 	if status != "" {

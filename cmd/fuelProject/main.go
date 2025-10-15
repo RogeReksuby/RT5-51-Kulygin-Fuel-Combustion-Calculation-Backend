@@ -14,18 +14,17 @@ import (
 	"repback/internal/pkg"
 )
 
-// @title BITOP
+// @title Расчёт горения топлива
 // @version 1.0
-// @description Bmstu Open IT Platform
+// @description Система для формирования и модерации заявок на расчёт параметров горения топлива. Позволяет пользователям добавлять топливо в заявку, заполнять молярный объём, а модераторам — проверять и утверждать расчёты.
 
-// @contact.name API Support
-// @contact.url https://vk.com/bmstu_schedule
-// @contact.email bitop@spatecon.ru
+// @contact.name Репозиторий
+// @contact.url https://github.com/RogeReksuby/web_rip
 
 // @license.name AS IS (NO WARRANTY)
 
 // @host localhost:8080
-// @schemes https http
+// @schemes http https
 // @BasePath /
 
 func main() {

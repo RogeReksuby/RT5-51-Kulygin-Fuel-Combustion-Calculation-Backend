@@ -13,7 +13,33 @@ import (
 	"time"
 )
 
+// GetCombustionCalculationsAPI godoc
+// @Summary Получить список расчетов горения
+// @Description Возвращает список расчетов горения с возможностью фильтрации. Обычные пользователи видят только свои расчеты, модераторы видят все расчеты в системе.
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param status query string false "Фильтр по статусу расчета" Enums(черновик, сформирован, завершён, отклонён, удалён)
+// @Param start_date query string false "Фильтр по дате создания (начало периода в формате DD.MM.YYYY)"
+// @Param end_date query string false "Фильтр по дате создания (конец периода в формате DD.MM.YYYY)"
+// @Success 200 {object} map[string][]ds.CombustionResponse "Успешный ответ со списком расчетов"
+// @Failure 400 {object} map[string]string "Неверные параметры запроса"
+// @Failure 403 {object} map[string]string "Доступ запрещен или пользователь не авторизован"
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера"
+// @Router /api/combustions [get]
 func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
+	userId, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
+	userIsModerator, err := h.GetUserIsModeratorFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
+
 	var filter struct {
 		Status    string `form:"status"`
 		StartDate string `form:"start_date"`
@@ -25,7 +51,7 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 		return
 	}
 
-	calculations, err := h.Repository.GetCombustionCalculations(filter.Status, filter.StartDate, filter.EndDate)
+	calculations, err := h.Repository.GetCombustionCalculations(userId, userIsModerator, filter.Status, filter.StartDate, filter.EndDate)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
@@ -59,6 +85,19 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 	})
 }
 
+// GetCombustionCalculationAPI godoc
+// @Summary Получить детали расчета горения по ID
+// @Description Возвращает детальную информацию о конкретном расчете горения включая список используемого топлива
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID расчета горения"
+// @Success 200 {object} map[string]interface{} "Успешный ответ с данными расчета"
+// @Failure 400 {object} map[string]string "Неверный ID расчета"
+// @Failure 403 {object} map[string]string "Доступ запрещен"
+// @Failure 404 {object} map[string]string "Расчет не найден"
+// @Router /api/combustions/{id} [get]
 func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -121,6 +160,21 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
+// UpdateCombustionMolarVolumeAPI godoc
+// @Summary Обновить молярный объем расчета горения
+// @Description Обновляет значение молярного объема для расчета горения. Доступно только для расчетов в статусе "черновик".
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID расчета горения" example(1)
+// @Param input body map[string]float64 true "Данные для обновления" example({"molar_volume": 22.414})
+// @Success 200 {object} map[string]interface{} "Молярный объем успешно обновлен" example({"data":{"ID":1,"Status":"черновик","MolarVolume":22.414},"message":"MolarVolume успешно обновлен"})
+// @Failure 400 {object} map[string]string "Неверные данные запроса" example({"error":"molar_volume: cannot be empty"})
+// @Failure 403 {object} map[string]string "Доступ запрещен" example({"error":"Требуется авторизация"})
+// @Failure 404 {object} map[string]string "Расчет не найден" example({"error":"Расчет с ID 1 не найден"})
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера" example({"error":"Ошибка при обновлении"})
+// @Router /api/combustions/{id} [put]
 func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -156,6 +210,19 @@ func (h *Handler) UpdateCombustionMolarVolumeAPI(ctx *gin.Context) {
 	})
 }
 
+// FormCombustionCalculationAPI godoc
+// @Summary Сформировать расчет горения
+// @Description Переводит расчет горения из статуса "черновик" в статус "сформирован". Расчет должен содержать хотя бы одно топливо и заполненный молярный объем.
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID расчета горения" example(1)
+// @Success 200 {object} map[string]interface{} "Расчет успешно сформирован" example({"data":{"ID":1,"Status":"сформирован"},"fuels":[{"id":1,"title":"Природный газ"}],"message":"Заявка успешно сформирована"})
+// @Failure 400 {object} map[string]string "Ошибка формирования" example({"error":"Добавьте хотя бы одну услугу для формирования заявки"})
+// @Failure 403 {object} map[string]string "Доступ запрещен"
+// @Failure 404 {object} map[string]string "Расчет не найден"
+// @Router /api/combustions/{id}/form [put]
 func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -183,6 +250,21 @@ func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
+// CompleteOrRejectCombustionAPI godoc
+// @Summary Завершить или отклонить расчёт горения
+// @Description Модератор может завершить (одобрить) или отклонить расчёт горения. Требуется роль модератора.
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID расчёта горения" example(1)
+// @Param request body object{is_complete=bool} true "Решение модератора" example({"is_complete":true})
+// @Success 200 {object} map[string]interface{} "Операция выполнена успешно" example({"data":{"ID":1,"Status":"завершён"},"fuels":[{"id":1,"title":"Природный газ"}],"message":"Заявка завершена"})
+// @Failure 400 {object} map[string]string "Ошибка валидации или бизнес-логики" example({"error":"Невозможно изменить статус расчёта"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Требуется роль модератора"})
+// @Failure 404 {object} map[string]string "Расчёт не найден" example({"error":"Расчёт горения с указанным ID не найден"})
+// @Router /api/combustions/{id}/moderate [put]
 func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.Atoi(idStr)
@@ -200,7 +282,11 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 		return
 	}
 
-	moderatorID := uint(2)
+	moderatorID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		return
+	}
 
 	err = h.Repository.CompleteOrRejectCombustion(uint(id), moderatorID, input.IsComplete)
 	if err != nil {
@@ -226,7 +312,20 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	})
 }
 
-// RemoveFuelFromCombustionAPI - DELETE удаление услуги из заявки
+// RemoveFuelFromCombustionAPI godoc
+// @Summary Удалить топливо из заявки на расчёт горения
+// @Description Удаляет указанное топливо из текущей активной заявки пользователя. Топливо задаётся через query-параметр fuel_id.
+// @Tags Fuel-combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param fuel_id query int true "ID топлива для удаления" example(5)
+// @Success 200 {object} map[string]interface{} "Топливо успешно удалено" example({"message":"Услуга удалена из заявки"})
+// @Failure 400 {object} map[string]string "Ошибка запроса" example({"error":"Некорректный ID топлива"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Недостаточно прав для выполнения операции"})
+// @Failure 404 {object} map[string]string "Топливо или заявка не найдены" example({"error":"Топливо не найдено в вашей заявке"})
+// @Router /api/fuel-combustions [delete]
 func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 
 	userId, err := h.GetUserIDFromContext(ctx)
@@ -251,7 +350,19 @@ func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 	})
 }
 
-// UpdateFuelInCombustionAPI - PUT изменение данных в связи м-м
+// UpdateFuelInCombustionAPI godoc
+// @Summary Обновить объём топлива в заявке
+// @Description Обновляет объём указанного топлива в текущей активной заявке пользователя.
+// @Tags Fuel-combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body object{fuel_id=int,fuel_volume=number} true "Данные для обновления топлива" example({"fuel_id":3,"fuel_volume":150.5})
+// @Success 200 {object} map[string]interface{} "Топливо успешно обновлено" example({"message":"Данные услуги в заявке обновлены"})
+// @Failure 400 {object} map[string]string "Ошибка валидации или бизнес-логики" example({"error":"Некорректный объём топлива или топливо не найдено в заявке"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Указанное топливо отсутствует в вашей заявке"})
+// @Router /api/fuel-combustions [put]
 func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 	userID, err := h.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -280,7 +391,19 @@ func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 	})
 }
 
-// DeleteCombustionCalculationAPI - DELETE удаление заявки
+// DeleteCombustionCalculationAPI godoc
+// @Summary Удалить текущую заявку на расчёт горения
+// @Description Удаляет активную (черновик) заявку на расчёт горения текущего пользователя. Заявка определяется автоматически по ID пользователя.
+// @Tags Combustions
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Заявка успешно удалена" example({"message":"Заявка успешно удалена"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Нет прав на удаление заявки"})
+// @Failure 404 {object} map[string]string "Заявка не найдена" example({"error":"Активная заявка не найдена"})
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера" example({"error":"Не удалось удалить заявку"})
+// @Router /api/combustions [delete]
 func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
 	userID, err := h.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -301,7 +424,20 @@ func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
-// UpdateUserAPI - обновление только переданных полей
+// UpdateUserAPI godoc
+// @Summary Частично обновить профиль пользователя
+// @Description Обновляет указанные поля профиля текущего пользователя. Все поля опциональны — можно отправить только те, что нужно изменить.
+// @Tags Users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body object{login=string,name=string,is_moderator=bool} false "Поля для обновления (любое подмножество)" example({"name":"Иванов Иван","login":"ivanov"})
+// @Success 200 {object} map[string]interface{} "Профиль успешно обновлён" example({"data":{"ID":5,"login":"ivanov","name":"Иванов Иван","is_moderator":false},"message":"Данные обновлены"})
+// @Failure 400 {object} map[string]string "Ошибка валидации или бизнес-логики" example({"error":"нет полей для обновления"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Нет прав на изменение профиля"})
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера" example({"error":"Не удалось обновить данные"})
+// @Router /api/users/profile [put]
 func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
 	userID, err := h.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -363,7 +499,7 @@ type LoginResponse struct {
 // LoginUserAPI godoc
 // @Summary Аутентификация пользователя
 // @Description Выполняет вход пользователя в систему и возвращает JWT токен для доступа к защищенным endpoint'ам
-// @Tags Auth
+// @Tags Users
 // @Accept json
 // @Produce json
 // @Param request body LoginRequest true "Данные для входа"
@@ -421,7 +557,7 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 // LogoutUserAPI godoc
 // @Summary Выход пользователя
 // @Description Добавляет JWT токен в черный список
-// @Tags Auth
+// @Tags Users
 // @Security BearerAuth
 // @Produce json
 // @Success 200 {object} map[string]string "Успешный выход"
@@ -478,7 +614,22 @@ func (h *Handler) LogoutUserAPI(ctx *gin.Context) {
 	})
 }
 
-// UploadFuelImageAPI - REST API метод для загрузки изображения услуги
+// UploadFuelImageAPI godoc
+// @Summary Загрузить изображение для топлива
+// @Description Загружает изображение для указанного топлива. Требуется роль модератора. Файл должен быть передан в поле 'image' формы.
+// @Tags Fuels
+// @Security BearerAuth
+// @Accept multipart/form-data
+// @Produce json
+// @Param id path int true "ID топлива" example(3)
+// @Param image formData file true "Файл изображения (JPEG, PNG)"
+// @Success 200 {object} map[string]interface{} "Изображение успешно загружено" example({"data":{"ID":3,"title":"Природный газ","image_url":"/uploads/fuel_3.jpg"},"message":"Изображение успешно загружено"})
+// @Failure 400 {object} map[string]string "Ошибка запроса" example({"error":"файл изображения обязателен"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Требуется роль модератора"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Топливо с указанным ID не существует"})
+// @Failure 500 {object} map[string]string "Ошибка сервера" example({"error":"Не удалось сохранить изображение"})
+// @Router /api/fuels/{id}/image [post]
 func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -514,6 +665,16 @@ func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
 	})
 }
 
+// GetCombCartIconAPI godoc
+// @Summary Получить данные для иконки корзины расчёта горения
+// @Description Возвращает ID текущей активной заявки и количество добавленных топлив (услуг) для авторизованного пользователя.
+// @Tags Combustions
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Данные корзины" example({"id_combustion":12,"items_count":3})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Нет прав на просмотр данных"})
+// @Router /api/combustions/cart-icon [get]
 func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
 
 	userID, err := h.GetUserIDFromContext(ctx)
@@ -530,6 +691,17 @@ func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
 	})
 }
 
+// RegisterUserAPI godoc
+// @Summary Регистрация нового пользователя
+// @Description Создаёт нового пользователя и возвращает JWT-токен для авторизации. Поле is_moderator игнорируется — только администратор может назначать модераторов.
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param request body object{login=string,password=string,name=string,is_moderator=bool} true "Данные для регистрации" example({"login":"ivanov","password":"secret123","name":"Иванов Иван","is_moderator":false})
+// @Success 201 {object} ds.LoginResponse "Пользователь успешно зарегистрирован"
+// @Failure 400 {object} map[string]string "Ошибка валидации или логики" example({"error":"Пользователь с таким логином уже существует"})
+// @Failure 500 {object} map[string]string "Внутренняя ошибка сервера" example({"error":"Не удалось создать токен"})
+// @Router /api/users/register [post]
 func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 	var input struct {
 		Login       string `json:"login" binding:"required"`
@@ -579,6 +751,17 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 	})
 }
 
+// GetUserProfileAPI godoc
+// @Summary Получить профиль текущего пользователя
+// @Description Возвращает данные профиля авторизованного пользователя (без пароля и других служебных полей).
+// @Tags Users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]interface{} "Профиль успешно получен" example({"data":{"ID":5,"login":"ivanov","name":"Иванов Иван","is_moderator":false}})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Неверный или просроченный токен"})
+// @Failure 404 {object} map[string]string "Пользователь не найден" example({"error":"Пользователь не существует"})
+// @Router /api/users/profile [get]
 func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
 	// В реальном приложении ID пользователя берется из JWT токена или сессии
 	// Для лабораторной работы используем фиксированного пользователя
@@ -599,6 +782,20 @@ func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
 	})
 }
 
+// DeleteFuelAPI godoc
+// @Summary Удалить топливо
+// @Description Удаляет запись топлива по указанному ID. Требуется роль модератора. Выполняется мягкое удаление (запись помечается как удалённая).
+// @Tags Fuels
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "ID топлива" example(5)
+// @Success 200 {object} map[string]interface{} "Топливо успешно удалено" example({"message":"Топливо успешно удалено"})
+// @Failure 400 {object} map[string]string "Некорректный ID" example({"error":"invalid syntax"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Требуется роль модератора"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Топливо с указанным ID не существует"})
+// @Failure 500 {object} map[string]string "Ошибка сервера" example({"error":"Не удалось выполнить удаление"})
+// @Router /api/fuels/{id} [delete]
 func (h *Handler) DeleteFuelAPI(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
@@ -626,6 +823,22 @@ func (h *Handler) DeleteFuelAPI(ctx *gin.Context) {
 	})
 }
 
+// UpdateFuelAPI godoc
+// @Summary Обновить данные топлива
+// @Description Частично обновляет информацию о топливе по указанному ID. Все поля опциональны — можно отправить только те, что нужно изменить. Требуется роль модератора.
+// @Tags Fuels
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param id path int true "ID топлива" example(3)
+// @Param request body object{title=string,heat=number,molar_mass=number,card_image=string,short_desc=string,full_desc=string,is_gas=bool} false "Поля для обновления (любое подмножество)" example({"title":"Природный газ (обновлённый)","heat":35.8,"is_gas":true})
+// @Success 200 {object} map[string]interface{} "Топливо успешно обновлено" example({"data":{"ID":3,"title":"Природный газ (обновлённый)","heat":35.8,"molar_mass":16.04,"card_image":"/uploads/gas.jpg","short_desc":"Чистое топливо","full_desc":"Используется в промышленности и быту","is_gas":true},"message":"Топливо успешно обновлено"})
+// @Failure 400 {object} map[string]string "Ошибка валидации" example({"error":"неверный формат JSON"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Требуется роль модератора"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Топливо с указанным ID не существует"})
+// @Failure 500 {object} map[string]string "Ошибка сервера" example({"error":"Не удалось обновить запись"})
+// @Router /api/fuels/{id} [put]
 func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 
 	idFuelStr := ctx.Param("id")
@@ -680,6 +893,20 @@ func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 	})
 }
 
+// CreateFuelAPI godoc
+// @Summary Создать новое топливо
+// @Description Создаёт новую запись топлива. Обязательные поля: title, heat. Остальные — опциональны. Требуется роль модератора.
+// @Tags Fuels
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body object{title=string,heat=number,molar_mass=number,density=number,short_desc=string,full_desc=string,is_gas=bool} true "Данные нового топлива" example({"title":"Природный газ","heat":35.8,"molar_mass":16.04,"density":0.8,"short_desc":"Чистое топливо","full_desc":"Широко используется в быту и промышленности","is_gas":true})
+// @Success 201 {object} map[string]interface{} "Топливо успешно создано" example({"data":{"ID":10,"title":"Природный газ","heat":35.8,"molar_mass":16.04,"density":0.8,"short_desc":"Чистое топливо","full_desc":"Широко используется в быту и промышленности","is_gas":true},"message":"Топливо успешно создано"})
+// @Failure 400 {object} map[string]string "Ошибка валидации" example({"error":"Key: 'title' Error:Field validation for 'title' failed on the 'required' tag"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Требуется роль модератора"})
+// @Failure 500 {object} map[string]string "Ошибка сервера" example({"error":"Не удалось сохранить топливо в базу"})
+// @Router /api/fuels [post]
 func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 	var fuelInput struct {
 		Title     string  `json:"title" binding:"required"`
@@ -718,6 +945,19 @@ func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 	})
 }
 
+// AddFuelToCartAPI godoc
+// @Summary Добавить топливо в заявку на расчёт горения
+// @Description Добавляет указанное топливо в текущую активную заявку (корзину) авторизованного пользователя.
+// @Tags Fuels
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "ID топлива" example(7)
+// @Success 200 {object} map[string]interface{} "Топливо успешно добавлено" example({"message":"Услуга добавлена в заявку"})
+// @Failure 400 {object} map[string]string "Ошибка логики" example({"error":"Топливо уже добавлено в заявку"})
+// @Failure 401 {object} map[string]string "Неавторизован" example({"error":"Требуется авторизация"})
+// @Failure 403 {object} map[string]string "Доступ запрещён" example({"error":"Нет прав на изменение заявки"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Топливо с указанным ID не существует"})
+// @Router /api/fuels/{id}/add-to-comb [post]
 func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
 	userID, err := h.GetUserIDFromContext(ctx)
 	if err != nil {
@@ -741,6 +981,16 @@ func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
 	})
 }
 
+// GetFuelAPI godoc
+// @Summary Получить данные топлива по ID
+// @Description Возвращает полную информацию о топливе по указанному идентификатору. Доступен без авторизации.
+// @Tags Fuels
+// @Produce json
+// @Param id path int true "ID топлива" example(3)
+// @Success 200 {object} map[string]interface{} "Данные топлива" example({"data":{"ID":3,"title":"Природный газ","heat":35.8,"molar_mass":16.04,"density":0.8,"short_desc":"Чистое топливо","full_desc":"Широко используется в быту и промышленности","is_gas":true}})
+// @Failure 400 {object} map[string]string "Некорректный ID" example({"error":"invalid syntax"})
+// @Failure 404 {object} map[string]string "Топливо не найдено" example({"error":"Топливо с указанным ID не существует"})
+// @Router /api/fuels/{id} [get]
 func (h *Handler) GetFuelAPI(ctx *gin.Context) {
 	idFuelStr := ctx.Param("id")
 	idFuel, err := strconv.Atoi(idFuelStr)
@@ -763,7 +1013,7 @@ func (h *Handler) GetFuelAPI(ctx *gin.Context) {
 // GetFuelsAPI returns a list of fuels
 // @Summary Получить список топлива
 // @Description Возвращает все виды топлива. Поддерживается фильтрация по названию через query-параметр ?title=...
-// @Tags fuels
+// @Tags Fuels
 // @Produce json
 // @Param title query string false "Фильтр по названию топлива (частичное совпадение)"
 // @Router /api/fuels [get]
@@ -800,4 +1050,13 @@ func (h *Handler) GetUserIDFromContext(ctx *gin.Context) (uint, error) {
 	}
 
 	return userID.(uint), nil
+}
+
+func (h *Handler) GetUserIsModeratorFromContext(ctx *gin.Context) (bool, error) {
+	user, exists := ctx.Get("isModerator")
+	if !exists {
+		return false, fmt.Errorf("требуется авторизация")
+	}
+
+	return user.(bool), nil
 }
