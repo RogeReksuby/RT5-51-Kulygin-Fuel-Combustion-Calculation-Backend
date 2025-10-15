@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"repback/internal/app/ds"
 	"repback/internal/app/role"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -402,7 +404,60 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 	})
 }
 
+// LogoutUserAPI godoc
+// @Summary Выход пользователя
+// @Description Добавляет JWT токен в черный список
+// @Tags Auth
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {object} map[string]string "Успешный выход"
+// @Failure 500 {object} map[string]string "Ошибка сервера"
+// @Router /api/users/logout [post]
 func (h *Handler) LogoutUserAPI(ctx *gin.Context) {
+	tokenString := ctx.GetHeader("Authorization")
+	if tokenString == "" {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "Выход выполнен",
+		})
+		return
+	}
+
+	if !strings.HasPrefix(tokenString, jwtPrefix) {
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "Выход выполнен",
+		})
+		return
+	}
+
+	// Отрезаем префикс
+	tokenString = tokenString[len(jwtPrefix):]
+
+	// Парсим токен чтобы получить expiration time
+	claims := &ds.JWTClaims{}
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(h.Config.JWTSecretKey), nil
+	})
+
+	if err != nil || !token.Valid {
+		// Если токен невалиден, все равно считаем выход успешным
+		ctx.JSON(http.StatusOK, gin.H{
+			"message": "Выход выполнен",
+		})
+		return
+	}
+
+	// Добавляем токен в черный список
+	if h.Repository.RedisClient != nil {
+		// Время жизни в черном списке = оставшееся время жизни токена
+		remainingTTL := time.Unix(claims.ExpiresAt, 0).Sub(time.Now())
+		if remainingTTL > 0 {
+			err = h.Repository.RedisClient.WriteJWTToBlacklist(ctx.Request.Context(), tokenString, remainingTTL)
+			if err != nil {
+				// Логируем ошибку, но все равно возвращаем успех
+				logrus.Errorf("Ошибка добавления токена в черный список: %v", err)
+			}
+		}
+	}
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Выход выполнен успешно",

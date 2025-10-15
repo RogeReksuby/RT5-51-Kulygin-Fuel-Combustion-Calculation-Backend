@@ -10,3 +10,6 @@ bucket = "ripimages"
 jwt_secret_key = "etokabachok"
 jwt_expires_in = "24h"
 jwt_issuer = "repback-app"
+
+redis_dial_timeout = "10s"
+redis_read_timeout = "10s"

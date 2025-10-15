@@ -26,6 +26,22 @@ func (h *Handler) WithAuthCheck(allowedRoles ...role.Role) gin.HandlerFunc {
 		// Отрезаем префикс
 		jwtStr = jwtStr[len(jwtPrefix):]
 
+		if h.Repository.RedisClient != nil {
+			isBlacklisted, err := h.Repository.RedisClient.CheckJWTInBlacklist(gCtx.Request.Context(), jwtStr)
+			if err != nil {
+				gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"error": "Ошибка проверки токена",
+				})
+				return
+			}
+			if isBlacklisted {
+				gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Токен заблокирован",
+				})
+				return
+			}
+		}
+
 		claims := &ds.JWTClaims{}
 		token, err := jwt.ParseWithClaims(jwtStr, claims, func(token *jwt.Token) (interface{}, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -80,48 +96,6 @@ func (h *Handler) WithAuthCheck(allowedRoles ...role.Role) gin.HandlerFunc {
 		gCtx.Set("isModerator", claims.IsModerator)
 		gCtx.Set("userName", claims.Name)
 		gCtx.Set("role", claims.Role)
-
-		gCtx.Next()
-	}
-}
-
-func (h *Handler) RequireAuth() gin.HandlerFunc {
-	return func(gCtx *gin.Context) {
-		userRole, exists := gCtx.Get("role")
-		if !exists {
-			gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "Ошибка проверки прав доступа",
-			})
-			return
-		}
-
-		if !userRole.(role.Role).IsAuthenticated() {
-			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "Требуется авторизация",
-			})
-			return
-		}
-
-		gCtx.Next()
-	}
-}
-
-func (h *Handler) RequireModerator() gin.HandlerFunc {
-	return func(gCtx *gin.Context) {
-		userRole, exists := gCtx.Get("role")
-		if !exists {
-			gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "Ошибка проверки прав доступа",
-			})
-			return
-		}
-
-		if !userRole.(role.Role).HasModeratorAccess() {
-			gCtx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": "Недостаточно прав. Требуется роль модератора",
-			})
-			return
-		}
 
 		gCtx.Next()
 	}

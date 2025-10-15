@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
+	"log"
 	"repback/internal/app/config"
 	"repback/internal/app/dsn"
 	"repback/internal/app/handler"
+	"repback/internal/app/redis"
 	"repback/internal/app/repository"
 	"repback/internal/pkg"
 )
@@ -49,6 +52,12 @@ func main() {
 		logrus.Fatalf("error loading config: %v", err)
 	}
 
+	redisClient, err := redis.New(context.Background(), *conf)
+	if err != nil {
+		log.Fatal("Failed to connect to Redis:", err)
+	}
+	defer redisClient.Close()
+
 	postgresString := dsn.FromEnv()
 	fmt.Println(postgresString)
 	logrus.Infof("MinIO Config: endpoint=%s, access_key=%s, bucket=%s",
@@ -60,7 +69,7 @@ func main() {
 	}
 	logrus.Info("MinIO client initialized successfully")
 
-	rep, errRep := repository.New(postgresString, minioClient, conf.MinIOBucket)
+	rep, errRep := repository.New(postgresString, minioClient, conf.MinIOBucket, redisClient)
 	if errRep != nil {
 		logrus.Fatalf("error creating repository: %v", errRep)
 	}

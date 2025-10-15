@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
+	"strconv"
 	"time"
 )
 
@@ -25,7 +26,21 @@ type Config struct {
 	JWTSecretKey string        `mapstructure:"jwt_secret_key"`
 	JWTExpiresIn time.Duration `mapstructure:"jwt_expires_in"`
 	JWTIssuer    string        `mapstructure:"jwt_issuer"`
+
+	RedisHost        string        `mapstructure:"redis_host"`
+	RedisPort        int           `mapstructure:"redis_port"`
+	RedisPassword    string        `mapstructure:"redis_password"`
+	RedisUser        string        `mapstructure:"redis_user"`
+	RedisDialTimeout time.Duration `mapstructure:"redis_dial_timeout"`
+	RedisReadTimeout time.Duration `mapstructure:"redis_read_timeout"`
 }
+
+const (
+	envRedisHost = "REDIS_HOST"
+	envRedisPort = "REDIS_PORT"
+	envRedisUser = "REDIS_USER"
+	envRedisPass = "REDIS_PASSWORD"
+)
 
 func NewConfig() (*Config, error) {
 	var err error
@@ -42,23 +57,51 @@ func NewConfig() (*Config, error) {
 	viper.AddConfigPath(".")
 	viper.WatchConfig()
 
+	viper.SetDefault("redis_host", "localhost")
+	viper.SetDefault("redis_port", 6379)
+	viper.SetDefault("redis_dial_timeout", "10s")
+	viper.SetDefault("redis_read_timeout", "10s")
+
 	err = viper.ReadInConfig()
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := &Config{
-		ServiceHost:    viper.GetString("ServiceHost"),
-		ServicePort:    viper.GetInt("ServicePort"),
-		MinIOEndpoint:  viper.GetString("endpoint"),
-		MinIOAccessKey: viper.GetString("access_key"),
-		MinIOSecretKey: viper.GetString("secret_key"),
-		MinIOUseSSL:    viper.GetBool("use_ssl"),
-		MinIOBucket:    viper.GetString("bucket"),
-		JWTSecretKey:   viper.GetString("jwt_secret_key"),
-		JWTExpiresIn:   viper.GetDuration("jwt_expires_in"),
-		JWTIssuer:      viper.GetString("jwt_issuer"),
+		ServiceHost:      viper.GetString("ServiceHost"),
+		ServicePort:      viper.GetInt("ServicePort"),
+		MinIOEndpoint:    viper.GetString("endpoint"),
+		MinIOAccessKey:   viper.GetString("access_key"),
+		MinIOSecretKey:   viper.GetString("secret_key"),
+		MinIOUseSSL:      viper.GetBool("use_ssl"),
+		MinIOBucket:      viper.GetString("bucket"),
+		JWTSecretKey:     viper.GetString("jwt_secret_key"),
+		JWTExpiresIn:     viper.GetDuration("jwt_expires_in"),
+		JWTIssuer:        viper.GetString("jwt_issuer"),
+		RedisHost:        viper.GetString("redis_host"),
+		RedisPort:        viper.GetInt("redis_port"),
+		RedisPassword:    viper.GetString("redis_password"),
+		RedisUser:        viper.GetString("redis_user"),
+		RedisDialTimeout: viper.GetDuration("redis_dial_timeout"),
+		RedisReadTimeout: viper.GetDuration("redis_read_timeout"),
 	}
+
+	if host := os.Getenv(envRedisHost); host != "" {
+		cfg.RedisHost = host
+	}
+	if port := os.Getenv(envRedisPort); port != "" {
+		cfg.RedisPort, err = strconv.Atoi(port)
+		if err != nil {
+			return nil, fmt.Errorf("redis port must be int value: %w", err)
+		}
+	}
+	if user := os.Getenv(envRedisUser); user != "" {
+		cfg.RedisUser = user
+	}
+	if password := os.Getenv(envRedisPass); password != "" {
+		cfg.RedisPassword = password
+	}
+
 	err = viper.Unmarshal(cfg)
 	if err != nil {
 		return nil, err
@@ -108,5 +151,30 @@ func (c *Config) GetJWTConfig() struct {
 		SecretKey: c.JWTSecretKey,
 		ExpiresIn: c.JWTExpiresIn,
 		Issuer:    c.JWTIssuer,
+	}
+}
+
+func (c *Config) GetRedisConfig() struct {
+	Host        string
+	Port        int
+	Password    string
+	User        string
+	DialTimeout time.Duration
+	ReadTimeout time.Duration
+} {
+	return struct {
+		Host        string
+		Port        int
+		Password    string
+		User        string
+		DialTimeout time.Duration
+		ReadTimeout time.Duration
+	}{
+		Host:        c.RedisHost,
+		Port:        c.RedisPort,
+		Password:    c.RedisPassword,
+		User:        c.RedisUser,
+		DialTimeout: c.RedisDialTimeout,
+		ReadTimeout: c.RedisReadTimeout,
 	}
 }
