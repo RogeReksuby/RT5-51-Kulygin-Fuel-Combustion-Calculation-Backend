@@ -7,6 +7,7 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 	"repback/internal/app/config"
 	"repback/internal/app/repository"
+	"repback/internal/app/role"
 )
 
 import _ "repback/cmd/fuelProject/docs"
@@ -43,7 +44,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 
 		// === ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизации) ===
 		auth := api.Group("")
-		auth.Use(h.WithAuthCheck, h.RequireAuth()) // ВАЖНО: вызываем как функцию
+		auth.Use(h.WithAuthCheck(role.Buyer, role.Moderator))
 		{
 			// Пользовательские операции
 			auth.GET("/users/profile", h.GetUserProfileAPI)
@@ -53,10 +54,8 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			// Работа с корзиной и заявками
 			auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
 			auth.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
-			auth.GET("/combustions", h.GetCombustionCalculationsAPI)
 			auth.GET("/combustions/:id", h.GetCombustionCalculationAPI)
 			auth.PUT("/combustions/:id", h.UpdateCombustionMolarVolumeAPI)
-			auth.PUT("/combustions/:id/form", h.FormCombustionCalculationAPI)
 			auth.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
 			auth.DELETE("/fuel-combustions", h.RemoveFuelFromCombustionAPI)
 			auth.PUT("/fuel-combustions", h.UpdateFuelInCombustionAPI)
@@ -64,13 +63,15 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 
 		// === МАРШРУТЫ ДЛЯ МОДЕРАТОРОВ ===
 		moderator := api.Group("")
-		moderator.Use(h.WithAuthCheck, h.RequireModerator())
+		moderator.Use(h.WithAuthCheck(role.Moderator))
 		{
 			// Управление топливом
 			moderator.POST("/fuels", h.CreateFuelAPI)
 			moderator.PUT("/fuels/:id", h.UpdateFuelAPI)
 			moderator.DELETE("/fuels/:id", h.DeleteFuelAPI)
 			moderator.POST("/fuels/:id/image", h.UploadFuelImageAPI)
+			moderator.PUT("/combustions/:id/form", h.FormCombustionCalculationAPI)
+			moderator.GET("/combustions", h.GetCombustionCalculationsAPI)
 
 			// Модерация заявок
 			moderator.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)

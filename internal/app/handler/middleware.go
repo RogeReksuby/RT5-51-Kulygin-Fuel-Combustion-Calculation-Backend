@@ -13,68 +13,76 @@ import (
 
 const jwtPrefix = "Bearer "
 
-func (h *Handler) WithAuthCheck(gCtx *gin.Context) {
-	tokenString := gCtx.GetHeader("Authorization")
-
-	if tokenString == "" {
-		gCtx.Set("role", role.Guest)
-		gCtx.Set("userID", uint(0))
-		gCtx.Set("isModerator", false)
-		gCtx.Next()
-		return
-	}
-
-	if !strings.HasPrefix(tokenString, jwtPrefix) {
-		gCtx.AbortWithStatus(http.StatusForbidden)
-		return
-	}
-
-	jwtConfig := h.Config.GetJWTConfig()
-
-	tokenString = tokenString[len(jwtPrefix):]
-	claims := &ds.JWTClaims{}
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		// Проверяем что алгоритм подписи тот который мы используем
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("неожиданный метод подписи: %v", token.Header["alg"])
+func (h *Handler) WithAuthCheck(allowedRoles ...role.Role) gin.HandlerFunc {
+	return func(gCtx *gin.Context) {
+		jwtStr := gCtx.GetHeader("Authorization")
+		if !strings.HasPrefix(jwtStr, jwtPrefix) {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Требуется авторизация",
+			})
+			return
 		}
-		return []byte(jwtConfig.SecretKey), nil
-	})
 
-	// Проверяем ошибки парсинга
-	if err != nil {
-		gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "Неверный токен: " + err.Error(),
+		// Отрезаем префикс
+		jwtStr = jwtStr[len(jwtPrefix):]
+
+		claims := &ds.JWTClaims{}
+		token, err := jwt.ParseWithClaims(jwtStr, claims, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("неожиданный метод подписи: %v", token.Header["alg"])
+			}
+			return []byte(h.Config.JWTSecretKey), nil
 		})
-		return
+
+		if err != nil {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Неверный токен: " + err.Error(),
+			})
+			return
+		}
+
+		if !token.Valid {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Токен невалиден",
+			})
+			return
+		}
+
+		if claims.ExpiresAt < time.Now().Unix() {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Токен истек",
+			})
+			return
+		}
+
+		// 🔥 ИСПРАВЛЕННАЯ ЛОГИКА ПРОВЕРКИ РОЛЕЙ:
+		// Если указаны allowedRoles, проверяем что роль пользователя входит в список разрешенных
+		if len(allowedRoles) > 0 {
+			roleAllowed := false
+			for _, allowedRole := range allowedRoles {
+				if claims.Role == allowedRole {
+					roleAllowed = true
+					break
+				}
+			}
+
+			if !roleAllowed {
+				gCtx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+					"error": fmt.Sprintf("Недостаточно прав. Ваша роль: %s, требуемые: %v", claims.Role, allowedRoles),
+				})
+				return
+			}
+		}
+
+		// Сохраняем данные пользователя в контекст
+		gCtx.Set("userID", claims.UserID)
+		gCtx.Set("userLogin", claims.Login)
+		gCtx.Set("isModerator", claims.IsModerator)
+		gCtx.Set("userName", claims.Name)
+		gCtx.Set("role", claims.Role)
+
+		gCtx.Next()
 	}
-
-	// Проверяем что токен валиден
-	if !token.Valid {
-		gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "Токен невалиден",
-		})
-		return
-	}
-
-	// Проверяем что токен не истек
-	if claims.ExpiresAt < time.Now().Unix() {
-		gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-			"error": "Токен истек",
-		})
-		return
-	}
-
-	userRole := role.FromUser(claims.UserID, claims.IsModerator)
-
-	// Сохраняем данные пользователя в контекст для использования в handler'ах
-	gCtx.Set("userID", claims.UserID)
-	gCtx.Set("userLogin", claims.Login)
-	gCtx.Set("isModerator", claims.IsModerator)
-	gCtx.Set("userName", claims.Name)
-	gCtx.Set("role", userRole)
-
-	gCtx.Next()
 }
 
 func (h *Handler) RequireAuth() gin.HandlerFunc {
