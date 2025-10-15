@@ -2,6 +2,8 @@ package repository
 
 import (
 	"context"
+	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"github.com/minio/minio-go/v7"
 	"github.com/sirupsen/logrus"
@@ -332,17 +334,19 @@ func (r *Repository) RegisterUser(login, password, name string, isModerator bool
 		return nil, fmt.Errorf("пользователь с логином '%s' уже существует", login)
 	}
 
+	hashedPassword := generateHashString(password)
+
 	// Создаем пользователя (пароль сохраняется как есть)
 	newUser := ds.Users{
 		Login:       login,
-		Password:    password,
+		Password:    hashedPassword,
 		IsModerator: isModerator,
 		Name:        name,
 	}
 
 	err = r.db.Model(&ds.Users{}).Create(map[string]interface{}{
 		"login":        login,
-		"password":     password,
+		"password":     hashedPassword,
 		"name":         name,
 		"is_moderator": isModerator,
 	}).Error
@@ -353,6 +357,13 @@ func (r *Repository) RegisterUser(login, password, name string, isModerator bool
 	newUser.Password = ""
 
 	return &newUser, nil
+}
+
+// generateHashString - хеширование пароля как в методичке
+func generateHashString(s string) string {
+	h := sha1.New()
+	h.Write([]byte(s))
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 func (r *Repository) GetUserProfile(userID uint) (*ds.Users, error) {
@@ -378,8 +389,8 @@ func (r *Repository) AuthenticateUser(login, password string) (*ds.Users, error)
 		return nil, fmt.Errorf("неверный логин или пароль")
 	}
 
-	// Проверяем пароль (без хеширования)
-	if user.Password != password {
+	hashedInput := generateHashString(password)
+	if user.Password != hashedInput {
 		return nil, fmt.Errorf("неверный логин или пароль")
 	}
 

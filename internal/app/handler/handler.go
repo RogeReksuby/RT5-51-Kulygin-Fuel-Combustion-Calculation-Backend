@@ -35,30 +35,46 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.POST("/remove-comb/:id", h.RemoveRequest)
 	api := router.Group("/api")
 	{
+		// === ПУБЛИЧНЫЕ API МАРШРУТЫ (без авторизации) ===
 		api.GET("/fuels", h.GetFuelsAPI)
 		api.GET("/fuels/:id", h.GetFuelAPI)
-		api.POST("/fuels", h.CreateFuelAPI)
-		api.PUT("/fuels/:id", h.UpdateFuelAPI)
-		api.DELETE("/fuels/:id", h.DeleteFuelAPI)
-		api.POST("/fuels/:id/image", h.UploadFuelImageAPI)
-		api.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
+		api.POST("/users/register", h.RegisterUserAPI)
+		api.POST("/users/login", h.LoginUserAPI)
 
-		api.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
-		api.GET("/combustions", h.GetCombustionCalculationsAPI)
-		api.GET("combustions/:id", h.GetCombustionCalculationAPI)
-		api.PUT("/combustions/:id", h.UpdateCombustionMolarVolumeAPI)
-		api.PUT("/combustions/:id/form", h.FormCombustionCalculationAPI)
-		api.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)
-		api.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
+		// === ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизации) ===
+		auth := api.Group("")
+		auth.Use(h.WithAuthCheck, h.RequireAuth()) // ВАЖНО: вызываем как функцию
+		{
+			// Пользовательские операции
+			auth.GET("/users/profile", h.GetUserProfileAPI)
+			auth.POST("/users/logout", h.LogoutUserAPI)
+			auth.PUT("/users/profile", h.UpdateUserAPI)
 
-		api.DELETE("fuel-combustions", h.RemoveFuelFromCombustionAPI)
-		api.PUT("fuel-combustions", h.UpdateFuelInCombustionAPI)
+			// Работа с корзиной и заявками
+			auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
+			auth.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
+			auth.GET("/combustions", h.GetCombustionCalculationsAPI)
+			auth.GET("/combustions/:id", h.GetCombustionCalculationAPI)
+			auth.PUT("/combustions/:id", h.UpdateCombustionMolarVolumeAPI)
+			auth.PUT("/combustions/:id/form", h.FormCombustionCalculationAPI)
+			auth.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
+			auth.DELETE("/fuel-combustions", h.RemoveFuelFromCombustionAPI)
+			auth.PUT("/fuel-combustions", h.UpdateFuelInCombustionAPI)
+		}
 
-		api.POST("users/register", h.RegisterUserAPI)
-		api.GET("users/profile", h.GetUserProfileAPI)
-		api.POST("users/login", h.LoginUserAPI)
-		api.POST("users/logout", h.LogoutUserAPI)
-		api.PUT("users/profile", h.UpdateUserAPI)
+		// === МАРШРУТЫ ДЛЯ МОДЕРАТОРОВ ===
+		moderator := api.Group("")
+		moderator.Use(h.WithAuthCheck, h.RequireModerator())
+		{
+			// Управление топливом
+			moderator.POST("/fuels", h.CreateFuelAPI)
+			moderator.PUT("/fuels/:id", h.UpdateFuelAPI)
+			moderator.DELETE("/fuels/:id", h.DeleteFuelAPI)
+			moderator.POST("/fuels/:id/image", h.UploadFuelImageAPI)
+
+			// Модерация заявок
+			moderator.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)
+		}
 	}
 }
 

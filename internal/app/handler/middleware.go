@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"net/http"
 	"repback/internal/app/ds"
+	"repback/internal/app/role"
 	"strings"
 	"time"
 )
@@ -14,6 +15,15 @@ const jwtPrefix = "Bearer "
 
 func (h *Handler) WithAuthCheck(gCtx *gin.Context) {
 	tokenString := gCtx.GetHeader("Authorization")
+
+	if tokenString == "" {
+		gCtx.Set("role", role.Guest)
+		gCtx.Set("userID", uint(0))
+		gCtx.Set("isModerator", false)
+		gCtx.Next()
+		return
+	}
+
 	if !strings.HasPrefix(tokenString, jwtPrefix) {
 		gCtx.AbortWithStatus(http.StatusForbidden)
 		return
@@ -55,11 +65,56 @@ func (h *Handler) WithAuthCheck(gCtx *gin.Context) {
 		return
 	}
 
+	userRole := role.FromUser(claims.UserID, claims.IsModerator)
+
 	// Сохраняем данные пользователя в контекст для использования в handler'ах
 	gCtx.Set("userID", claims.UserID)
 	gCtx.Set("userLogin", claims.Login)
 	gCtx.Set("isModerator", claims.IsModerator)
 	gCtx.Set("userName", claims.Name)
+	gCtx.Set("role", userRole)
 
 	gCtx.Next()
+}
+
+func (h *Handler) RequireAuth() gin.HandlerFunc {
+	return func(gCtx *gin.Context) {
+		userRole, exists := gCtx.Get("role")
+		if !exists {
+			gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": "Ошибка проверки прав доступа",
+			})
+			return
+		}
+
+		if !userRole.(role.Role).IsAuthenticated() {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Требуется авторизация",
+			})
+			return
+		}
+
+		gCtx.Next()
+	}
+}
+
+func (h *Handler) RequireModerator() gin.HandlerFunc {
+	return func(gCtx *gin.Context) {
+		userRole, exists := gCtx.Get("role")
+		if !exists {
+			gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": "Ошибка проверки прав доступа",
+			})
+			return
+		}
+
+		if !userRole.(role.Role).HasModeratorAccess() {
+			gCtx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+				"error": "Недостаточно прав. Требуется роль модератора",
+			})
+			return
+		}
+
+		gCtx.Next()
+	}
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/golang-jwt/jwt"
 	"net/http"
 	"repback/internal/app/ds"
+	"repback/internal/app/role"
 	"strconv"
 	"time"
 )
@@ -361,7 +362,6 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 		Password string `json:"password" binding:"required"`
 	}
 
-	// Парсим JSON из тела запроса
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
@@ -373,6 +373,7 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 		h.errorHandler(ctx, http.StatusForbidden, err)
 		return
 	}
+	userRole := role.FromUser(user.ID, user.IsModerator)
 
 	jwtConfig := h.Config.GetJWTConfig()
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &ds.JWTClaims{
@@ -380,6 +381,7 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 		Login:       user.Login,
 		IsModerator: user.IsModerator,
 		Name:        user.Name,
+		Role:        userRole,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(jwtConfig.ExpiresIn).Unix(), // используем из конфига
 			IssuedAt:  time.Now().Unix(),
@@ -474,9 +476,32 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, gin.H{
-		"data":    newUser,
-		"message": "Пользователь успешно зарегистрирован",
+	// Генерируем JWT токен (как в LoginUserAPI)
+	userRole := role.FromUser(newUser.ID, newUser.IsModerator)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &ds.JWTClaims{
+		UserID:      newUser.ID,
+		Login:       newUser.Login,
+		IsModerator: newUser.IsModerator,
+		Name:        newUser.Name,
+		Role:        userRole,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(h.Config.JWTExpiresIn).Unix(),
+			IssuedAt:  time.Now().Unix(),
+			Issuer:    h.Config.JWTIssuer,
+		},
+	})
+
+	tokenString, err := token.SignedString([]byte(h.Config.JWTSecretKey))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка создания токена: %w", err))
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, ds.LoginResponse{
+		AccessToken: tokenString,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(h.Config.JWTExpiresIn.Seconds()),
+		User:        newUser,
 	})
 }
 
