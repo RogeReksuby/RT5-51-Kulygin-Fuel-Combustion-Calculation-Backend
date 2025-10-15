@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"os"
+	"time"
 )
 
 type Config struct {
@@ -20,6 +21,10 @@ type Config struct {
 	MinIOSecretKey string
 	MinIOUseSSL    bool
 	MinIOBucket    string
+
+	JWTSecretKey string        `mapstructure:"jwt_secret_key"`
+	JWTExpiresIn time.Duration `mapstructure:"jwt_expires_in"`
+	JWTIssuer    string        `mapstructure:"jwt_issuer"`
 }
 
 func NewConfig() (*Config, error) {
@@ -50,6 +55,9 @@ func NewConfig() (*Config, error) {
 		MinIOSecretKey: viper.GetString("secret_key"),
 		MinIOUseSSL:    viper.GetBool("use_ssl"),
 		MinIOBucket:    viper.GetString("bucket"),
+		JWTSecretKey:   viper.GetString("jwt_secret_key"),
+		JWTExpiresIn:   viper.GetDuration("jwt_expires_in"),
+		JWTIssuer:      viper.GetString("jwt_issuer"),
 	}
 	err = viper.Unmarshal(cfg)
 	if err != nil {
@@ -85,4 +93,20 @@ func (c *Config) InitMinIO() (*minio.Client, error) {
 	}
 
 	return minioClient, nil
+}
+
+func (c *Config) GetJWTConfig() struct {
+	SecretKey string
+	ExpiresIn time.Duration
+	Issuer    string
+} {
+	return struct {
+		SecretKey string
+		ExpiresIn time.Duration
+		Issuer    string
+	}{
+		SecretKey: c.JWTSecretKey,
+		ExpiresIn: c.JWTExpiresIn,
+		Issuer:    c.JWTIssuer,
+	}
 }

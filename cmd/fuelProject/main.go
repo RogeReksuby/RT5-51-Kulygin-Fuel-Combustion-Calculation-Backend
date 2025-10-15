@@ -21,13 +21,30 @@ import (
 
 // @license.name AS IS (NO WARRANTY)
 
-// @host 127.0.0.1
+// @host localhost:8080
 // @schemes https http
 // @BasePath /
 
 func main() {
 	router := gin.Default()
+	// Добавьте CORS middleware
+	router.Use(func(c *gin.Context) {
+		c.Header("Access-Control-Allow-Origin", "*")
+		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		c.Header("Access-Control-Allow-Headers", "Origin, Content-Type, Authorization, Accept")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	})
+
 	conf, err := config.NewConfig()
+	if err != nil {
+		logrus.Fatalf("error loading config: %v", err)
+	}
 	if err != nil {
 		logrus.Fatalf("error loading config: %v", err)
 	}
@@ -50,5 +67,6 @@ func main() {
 
 	hand := handler.NewHandler(rep)
 	application := pkg.NewApp(conf, router, hand)
+
 	application.RunApp()
 }

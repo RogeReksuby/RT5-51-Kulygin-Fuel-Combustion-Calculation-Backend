@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
+	"repback/internal/app/config"
 	"repback/internal/app/repository"
 )
 
@@ -13,11 +14,14 @@ import _ "repback/cmd/fuelProject/docs"
 type Handler struct {
 	// то есть первое - имя поля структуры, второе - указатель на Repository из пакета repository
 	Repository *repository.Repository
+	Config     *config.Config
 }
 
 func NewHandler(r *repository.Repository) *Handler {
+	var conf, _ = config.NewConfig()
 	return &Handler{
 		Repository: r,
+		Config:     conf,
 	}
 }
 

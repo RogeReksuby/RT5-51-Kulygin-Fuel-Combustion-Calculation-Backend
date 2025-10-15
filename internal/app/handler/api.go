@@ -3,9 +3,11 @@ package handler
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
 	"net/http"
 	"repback/internal/app/ds"
 	"strconv"
+	"time"
 )
 
 func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
@@ -329,7 +331,30 @@ func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
 	})
 }
 
-// LoginUserAPI - REST API метод для аутентификации пользователя
+type LoginRequest struct {
+	Login    string `json:"login" binding:"required" example:"user123"`
+	Password string `json:"password" binding:"required" example:"password123"`
+}
+
+type LoginResponse struct {
+	AccessToken string    `json:"access_token"`
+	TokenType   string    `json:"token_type"`
+	ExpiresIn   int64     `json:"expires_in"`
+	User        *ds.Users `json:"user"`
+}
+
+// LoginUserAPI godoc
+// @Summary Аутентификация пользователя
+// @Description Выполняет вход пользователя в систему и возвращает JWT токен для доступа к защищенным endpoint'ам
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param request body LoginRequest true "Данные для входа"
+// @Success 200 {object} LoginResponse "Успешная аутентификация"
+// @Failure 400 {object} object{status=string,description=string} "Bad Request"
+// @Failure 403 {object} object{status=string,description=string} "Forbidden"
+// @Failure 500 {object} object{status=string,description=string} "Внутренняя ошибка сервера"
+// @Router /api/users/login [post]
 func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 	var input struct {
 		Login    string `json:"login" binding:"required"`
@@ -345,13 +370,33 @@ func (h *Handler) LoginUserAPI(ctx *gin.Context) {
 	// Аутентифицируем пользователя
 	user, err := h.Repository.AuthenticateUser(input.Login, input.Password)
 	if err != nil {
-		h.errorHandler(ctx, http.StatusUnauthorized, err)
+		h.errorHandler(ctx, http.StatusForbidden, err)
 		return
 	}
 
-	ctx.JSON(http.StatusOK, gin.H{
-		"data":    user,
-		"message": "Аутентификация успешна",
+	jwtConfig := h.Config.GetJWTConfig()
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &ds.JWTClaims{
+		UserID:      user.ID,
+		Login:       user.Login,
+		IsModerator: user.IsModerator,
+		Name:        user.Name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(jwtConfig.ExpiresIn).Unix(), // используем из конфига
+			IssuedAt:  time.Now().Unix(),
+			Issuer:    jwtConfig.Issuer, // используем из конфига
+		},
+	})
+	tokenString, err := token.SignedString([]byte(jwtConfig.SecretKey))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, fmt.Errorf("ошибка создания токена: %w", err))
+		return
+	}
+
+	ctx.JSON(http.StatusOK, ds.LoginResponse{
+		AccessToken: tokenString,
+		TokenType:   "Bearer",
+		ExpiresIn:   int64(jwtConfig.ExpiresIn.Seconds()), // используем из конфига
+		User:        user,
 	})
 }
 
@@ -417,7 +462,6 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 		Name        string `json:"name,omitempty"`
 	}
 
-	// Парсим JSON из тела запроса
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
@@ -613,7 +657,7 @@ func (h *Handler) GetFuelAPI(ctx *gin.Context) {
 // @Tags fuels
 // @Produce json
 // @Param title query string false "Фильтр по названию топлива (частичное совпадение)"
-// @Router /fuels [get]
+// @Router /api/fuels [get]
 func (h *Handler) GetFuelsAPI(ctx *gin.Context) {
 	var fuels []ds.Fuel
 	var err error

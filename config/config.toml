@@ -6,3 +6,7 @@ access_key = "root"
 secret_key = "rootroot"
 use_ssl = false
 bucket = "ripimages"
+
+jwt_secret_key = "etokabachok"
+jwt_expires_in = "24h"
+jwt_issuer = "repback-app"
