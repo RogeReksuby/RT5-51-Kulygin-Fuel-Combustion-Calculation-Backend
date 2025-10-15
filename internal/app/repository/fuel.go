@@ -82,10 +82,10 @@ func (r *Repository) GetReqFuels(requestID uint) ([]ds.Fuel, error) {
 	return fuels, nil
 }
 
-func (r *Repository) GetCartCount() int64 {
+func (r *Repository) GetCartCount(userID uint) int64 {
 	var requestID uint
 	var count int64
-	creatorID := 1
+	creatorID := userID
 
 	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", creatorID, "черновик").Select("id").First(&requestID).Error
 	if err != nil {
@@ -125,8 +125,7 @@ func (r *Repository) DeleteFuel(fuelId uint) error {
 	return nil
 }
 
-func (r *Repository) AddFuelToCart(fuelID uint) error {
-	userID := 1
+func (r *Repository) AddFuelToCart(fuelID uint, userID uint) error {
 	var requestID uint
 	var count int64
 	err := r.db.Model(&ds.CombustionCalculation{}).Where("creator_id = ? AND status = ?", userID, "черновик").Count(&count).Error
@@ -622,9 +621,9 @@ func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID 
 				return fmt.Errorf("ошибка получения данных об услугах: %w", err)
 			}
 			if fuel.IsGas {
-				res = fuel.Heat * fuel.MolarMass * fuelFromComb.FuelVolume / (1000 * calculation.MolarVolume)
+				res = fuel.Heat * fuel.MolarMass * fuelFromComb.FuelVolume / (calculation.MolarVolume)
 			} else {
-				res = fuel.Heat * fuel.Density * fuelFromComb.FuelVolume / 1000
+				res = fuel.Heat * fuel.Density * fuelFromComb.FuelVolume
 			}
 			r.db.Model(&ds.CombustionsFuels{}).Where("id = ?", fuelFromComb.ID).Update("intermediate_energies", res)
 			totalEnergy = totalEnergy + res

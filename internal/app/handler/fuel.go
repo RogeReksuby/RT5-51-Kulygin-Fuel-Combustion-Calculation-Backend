@@ -28,7 +28,7 @@ func (h *Handler) GetFuels(ctx *gin.Context) {
 
 	ctx.HTML(http.StatusOK, "index.html", gin.H{
 		"fuels":                fuels,
-		"cart_count":           h.Repository.GetCartCount(),
+		"cart_count":           2, //h.Repository.GetCartCount(),
 		"searchFuelTitleQuery": searchString,
 		"reqID":                h.Repository.GetRequestID(uint(1)),
 	})
@@ -98,14 +98,14 @@ func (h *Handler) DeleteChat(ctx *gin.Context) {
 }
 
 func (h *Handler) AddFuelToCart(ctx *gin.Context) {
-	strId := ctx.PostForm("fuel_id")
-	id, err := strconv.Atoi(strId)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-	}
-	err = h.Repository.AddFuelToCart(uint(id))
+	//strId := ctx.PostForm("fuel_id")
+	//id, err := strconv.Atoi(strId)
+	//if err != nil {
+	//	ctx.JSON(http.StatusInternalServerError, gin.H{
+	//		"error": err.Error(),
+	//	})
+	//}
+	//err = h.Repository.AddFuelToCart(uint(id))
 	ctx.Redirect(http.StatusFound, "/fuels")
 }
 

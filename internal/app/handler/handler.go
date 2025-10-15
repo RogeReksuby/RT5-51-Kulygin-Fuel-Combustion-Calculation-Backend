@@ -59,6 +59,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			auth.DELETE("/combustions", h.DeleteCombustionCalculationAPI)
 			auth.DELETE("/fuel-combustions", h.RemoveFuelFromCombustionAPI)
 			auth.PUT("/fuel-combustions", h.UpdateFuelInCombustionAPI)
+			auth.GET("/combustions", h.GetCombustionCalculationsAPI)
 		}
 
 		// === МАРШРУТЫ ДЛЯ МОДЕРАТОРОВ ===
@@ -71,7 +72,6 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			moderator.DELETE("/fuels/:id", h.DeleteFuelAPI)
 			moderator.POST("/fuels/:id/image", h.UploadFuelImageAPI)
 			moderator.PUT("/combustions/:id/form", h.FormCombustionCalculationAPI)
-			moderator.GET("/combustions", h.GetCombustionCalculationsAPI)
 
 			// Модерация заявок
 			moderator.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)

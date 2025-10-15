@@ -229,7 +229,9 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 // RemoveFuelFromCombustionAPI - DELETE удаление услуги из заявки
 func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 
-	calculationID := h.Repository.GetRequestID(1)
+	userId, err := h.GetUserIDFromContext(ctx)
+
+	calculationID := h.Repository.GetRequestID(userId)
 
 	fuelIDStr := ctx.Query("fuel_id")
 	fuelID, err := strconv.Atoi(fuelIDStr)
@@ -251,14 +253,17 @@ func (h *Handler) RemoveFuelFromCombustionAPI(ctx *gin.Context) {
 
 // UpdateFuelInCombustionAPI - PUT изменение данных в связи м-м
 func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
-
-	calculationID := h.Repository.GetRequestID(1)
+	userID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusBadRequest, err)
+	}
+	calculationID := h.Repository.GetRequestID(userID)
 
 	var input struct {
 		FuelID     uint    `json:"fuel_id" binding:"required"`
 		FuelVolume float64 `json:"fuel_volume" binding:"required"`
 	}
-	var err error
+
 	if err = ctx.ShouldBindJSON(&input); err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
@@ -277,9 +282,15 @@ func (h *Handler) UpdateFuelInCombustionAPI(ctx *gin.Context) {
 
 // DeleteCombustionCalculationAPI - DELETE удаление заявки
 func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
-	id := h.Repository.GetRequestID(1)
+	userID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
 
-	err := h.Repository.DeleteCombustionCalculation(uint(id))
+	id := h.Repository.GetRequestID(userID)
+
+	err = h.Repository.DeleteCombustionCalculation(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
@@ -292,8 +303,11 @@ func (h *Handler) DeleteCombustionCalculationAPI(ctx *gin.Context) {
 
 // UpdateUserAPI - обновление только переданных полей
 func (h *Handler) UpdateUserAPI(ctx *gin.Context) {
-	userID := uint(1)
-
+	userID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
 	var input struct {
 		Login       *string `json:"login,omitempty"`
 		Name        *string `json:"name,omitempty"`
@@ -502,8 +516,13 @@ func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
 
 func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
 
-	requestID := h.Repository.GetRequestID(1)
-	cartCount := h.Repository.GetCartCount()
+	userID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
+	requestID := h.Repository.GetRequestID(userID)
+	cartCount := h.Repository.GetCartCount(userID)
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"id_combustion": requestID,
@@ -563,7 +582,11 @@ func (h *Handler) RegisterUserAPI(ctx *gin.Context) {
 func (h *Handler) GetUserProfileAPI(ctx *gin.Context) {
 	// В реальном приложении ID пользователя берется из JWT токена или сессии
 	// Для лабораторной работы используем фиксированного пользователя
-	userID := uint(1) // Фиксированный ID пользователя
+	userID, err := h.GetUserIDFromContext(ctx) // Фиксированный ID пользователя
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
 
 	user, err := h.Repository.GetUserProfile(userID)
 	if err != nil {
@@ -696,13 +719,19 @@ func (h *Handler) CreateFuelAPI(ctx *gin.Context) {
 }
 
 func (h *Handler) AddFuelToCartAPI(ctx *gin.Context) {
+	userID, err := h.GetUserIDFromContext(ctx)
+	if err != nil {
+		h.errorHandler(ctx, http.StatusForbidden, err)
+		return
+	}
+
 	idFuelStr := ctx.Param("id")
 	id, err := strconv.Atoi(idFuelStr)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
 	}
-	err = h.Repository.AddFuelToCart(uint(id))
+	err = h.Repository.AddFuelToCart(uint(id), userID)
 	if err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
@@ -762,4 +791,13 @@ func (h *Handler) GetFuelsAPI(ctx *gin.Context) {
 		"data":  fuels,
 		"count": len(fuels),
 	})
+}
+
+func (h *Handler) GetUserIDFromContext(ctx *gin.Context) (uint, error) {
+	userID, exists := ctx.Get("userID")
+	if !exists {
+		return 0, fmt.Errorf("требуется авторизация")
+	}
+
+	return userID.(uint), nil
 }
