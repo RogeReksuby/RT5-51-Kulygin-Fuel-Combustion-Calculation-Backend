@@ -100,3 +100,90 @@ func (h *Handler) WithAuthCheck(allowedRoles ...role.Role) gin.HandlerFunc {
 		gCtx.Next()
 	}
 }
+
+func (h *Handler) WithAuthCheckCart(allowedRoles ...role.Role) gin.HandlerFunc {
+	return func(gCtx *gin.Context) {
+		jwtStr := gCtx.GetHeader("Authorization")
+		if !strings.HasPrefix(jwtStr, jwtPrefix) {
+			gCtx.Set("userID", uint(0))
+			gCtx.Next()
+			return
+		}
+
+		// Отрезаем префикс
+		jwtStr = jwtStr[len(jwtPrefix):]
+
+		if h.Repository.RedisClient != nil {
+			isBlacklisted, err := h.Repository.RedisClient.CheckJWTInBlacklist(gCtx.Request.Context(), jwtStr)
+			if err != nil {
+				gCtx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+					"error": "Ошибка проверки токена",
+				})
+				return
+			}
+			if isBlacklisted {
+				gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+					"error": "Токен заблокирован",
+				})
+				return
+			}
+		}
+
+		claims := &ds.JWTClaims{}
+		token, err := jwt.ParseWithClaims(jwtStr, claims, func(token *jwt.Token) (interface{}, error) {
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("неожиданный метод подписи: %v", token.Header["alg"])
+			}
+			return []byte(h.Config.JWTSecretKey), nil
+		})
+
+		if err != nil {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Неверный токен: " + err.Error(),
+			})
+			return
+		}
+
+		if !token.Valid {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Токен невалиден",
+			})
+			return
+		}
+
+		if claims.ExpiresAt < time.Now().Unix() {
+			gCtx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Токен истек",
+			})
+			return
+		}
+
+		// 🔥 ИСПРАВЛЕННАЯ ЛОГИКА ПРОВЕРКИ РОЛЕЙ:
+		// Если указаны allowedRoles, проверяем что роль пользователя входит в список разрешенных
+		if len(allowedRoles) > 0 {
+			roleAllowed := false
+			for _, allowedRole := range allowedRoles {
+				if claims.Role == allowedRole {
+					roleAllowed = true
+					break
+				}
+			}
+
+			if !roleAllowed {
+				gCtx.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+					"error": fmt.Sprintf("Недостаточно прав. Ваша роль: %s, требуемые: %v", claims.Role, allowedRoles),
+				})
+				return
+			}
+		}
+
+		// Сохраняем данные пользователя в контекст
+		gCtx.Set("userID", claims.UserID)
+		gCtx.Set("userLogin", claims.Login)
+		gCtx.Set("isModerator", claims.IsModerator)
+		gCtx.Set("userName", claims.Name)
+		gCtx.Set("role", claims.Role)
+
+		gCtx.Next()
+	}
+}

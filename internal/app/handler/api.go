@@ -678,8 +678,11 @@ func (h *Handler) UploadFuelImageAPI(ctx *gin.Context) {
 func (h *Handler) GetCombCartIconAPI(ctx *gin.Context) {
 
 	userID, err := h.GetUserIDFromContext(ctx)
-	if err != nil {
-		h.errorHandler(ctx, http.StatusForbidden, err)
+	if err != nil || userID == 0 {
+		ctx.JSON(http.StatusOK, gin.H{
+			"id_combustion": 0,
+			"items_count":   0,
+		})
 		return
 	}
 	requestID := h.Repository.GetRequestID(userID)

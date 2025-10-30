@@ -42,6 +42,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.POST("/users/register", h.RegisterUserAPI)
 		api.POST("/users/login", h.LoginUserAPI)
 
+		api.Use(h.WithAuthCheckCart(role.Buyer, role.Moderator)).GET("/combustions/cart-icon", h.GetCombCartIconAPI)
 		// === ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизации) ===
 		auth := api.Group("")
 		auth.Use(h.WithAuthCheck(role.Buyer, role.Moderator))
@@ -52,7 +53,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			auth.PUT("/users/profile", h.UpdateUserAPI)
 
 			// Работа с корзиной и заявками
-			auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
+			//auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
 			auth.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
 			auth.GET("/combustions/:id", h.GetCombustionCalculationAPI)
 			auth.PUT("/combustions/:id", h.UpdateCombustionMolarVolumeAPI)
