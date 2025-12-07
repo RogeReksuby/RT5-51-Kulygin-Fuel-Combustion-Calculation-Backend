@@ -1,5 +1,9 @@
-ServiceHost = "localhost"
+ServiceHost = "0.0.0.0"
 ServicePort = 8080
+
+https_address = ":8443"
+https_cert_file = "certs/server.crt"
+https_key_file = "certs/server.key"
 
 endpoint = "localhost:9000"
 access_key = "root"

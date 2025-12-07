@@ -494,8 +494,8 @@ func (r *Repository) GetCombustionCalculations(userID uint, userIsModerator bool
 	return calculations, nil
 }
 
-// GetCombustionCalculationByID - получение одной заявки с услугами
-func (r *Repository) GetCombustionCalculationByID(calculationID uint) (*ds.CombustionCalculation, []ds.Fuel, error) {
+// GetCombustionCalculationByID - получение одной заявки с услугами и объемами
+func (r *Repository) GetCombustionCalculationByID(calculationID uint) (*ds.CombustionCalculation, []ds.FuelWithVolume, error) {
 	var calculation ds.CombustionCalculation
 
 	// Загружаем заявку с создателем и модератором
@@ -509,19 +509,20 @@ func (r *Repository) GetCombustionCalculationByID(calculationID uint) (*ds.Combu
 		return nil, nil, fmt.Errorf("заявка с ID %d не найдена", calculationID)
 	}
 
-	// Отдельно загружаем услуги через промежуточную таблицу
-	var fuels []ds.Fuel
+	// Загружаем топливо с объемами через промежуточную таблицу
+	var fuelsWithVolume []ds.FuelWithVolume
 	err = r.db.
 		Table("fuels").
+		Select("fuels.*, combustions_fuels.fuel_volume").
 		Joins("JOIN combustions_fuels ON fuels.id = combustions_fuels.fuel_id").
 		Where("combustions_fuels.request_id = ?", calculationID).
-		Find(&fuels).Error
+		Find(&fuelsWithVolume).Error
 
 	if err != nil {
 		return nil, nil, fmt.Errorf("ошибка загрузки услуг: %w", err)
 	}
 
-	return &calculation, fuels, nil
+	return &calculation, fuelsWithVolume, nil
 }
 
 // UpdateCombustionMolarVolume - обновление MolarVolume только для черновиков

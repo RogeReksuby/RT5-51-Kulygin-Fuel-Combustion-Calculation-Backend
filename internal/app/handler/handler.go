@@ -13,7 +13,6 @@ import (
 import _ "repback/cmd/fuelProject/docs"
 
 type Handler struct {
-	// то есть первое - имя поля структуры, второе - указатель на Repository из пакета repository
 	Repository *repository.Repository
 	Config     *config.Config
 }
@@ -90,5 +89,3 @@ func (h *Handler) errorHandler(ctx *gin.Context, errorStatusCode int, err error)
 		"description": err.Error(),
 	})
 }
-
-//

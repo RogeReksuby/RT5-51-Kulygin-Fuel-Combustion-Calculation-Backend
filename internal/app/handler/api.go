@@ -87,7 +87,7 @@ func (h *Handler) GetCombustionCalculationsAPI(ctx *gin.Context) {
 
 // GetCombustionCalculationAPI godoc
 // @Summary Получить детали расчета горения по ID
-// @Description Возвращает детальную информацию о конкретном расчете горения включая список используемого топлива
+// @Description Возвращает детальную информацию о конкретном расчете горения включая список используемого топлива с объемами
 // @Tags Combustions
 // @Security BearerAuth
 // @Accept json
@@ -106,23 +106,23 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 		return
 	}
 
-	calculation, fuels, err := h.Repository.GetCombustionCalculationByID(uint(id))
+	calculation, fuelsWithVolume, err := h.Repository.GetCombustionCalculationByID(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusNotFound, err)
 		return
 	}
 
 	response := struct {
-		ID             uint
-		Status         string
-		DateCreate     string
-		DateUpdate     string
-		DateFinish     string
-		CreatorLogin   string
-		ModeratorLogin string
-		MolarVolume    float64
-		FinalResult    float64
-		Fuels          []ds.Fuel
+		ID             uint                `json:"ID"`
+		Status         string              `json:"Status"`
+		DateCreate     string              `json:"DateCreate"`
+		DateUpdate     string              `json:"DateUpdate"`
+		DateFinish     string              `json:"DateFinish,omitempty"`
+		CreatorLogin   string              `json:"CreatorLogin"`
+		ModeratorLogin string              `json:"ModeratorLogin,omitempty"`
+		MolarVolume    float64             `json:"MolarVolume"`
+		FinalResult    float64             `json:"FinalResult"`
+		Fuels          []ds.FuelWithVolume `json:"Fuels"`
 	}{
 		ID:           calculation.ID,
 		Status:       calculation.Status,
@@ -131,7 +131,7 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 		CreatorLogin: calculation.Creator.Login,
 		MolarVolume:  calculation.MolarVolume,
 		FinalResult:  calculation.FinalResult,
-		Fuels:        make([]ds.Fuel, len(fuels)),
+		Fuels:        fuelsWithVolume,
 	}
 
 	if calculation.DateFinish.Valid {
@@ -140,19 +140,6 @@ func (h *Handler) GetCombustionCalculationAPI(ctx *gin.Context) {
 
 	if calculation.Moderator.ID != 0 {
 		response.ModeratorLogin = calculation.Moderator.Login
-	}
-
-	for i, fuel := range fuels {
-		response.Fuels[i] = ds.Fuel{
-			ID:        fuel.ID,
-			Title:     fuel.Title,
-			Heat:      fuel.Heat,
-			MolarMass: fuel.MolarMass,
-			CardImage: fuel.CardImage,
-			ShortDesc: fuel.ShortDesc,
-			FullDesc:  fuel.FullDesc,
-			IsGas:     fuel.IsGas,
-		}
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{
