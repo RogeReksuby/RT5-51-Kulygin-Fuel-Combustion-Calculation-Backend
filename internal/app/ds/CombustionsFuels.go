@@ -9,6 +9,9 @@ type CombustionsFuels struct {
 	FuelVolume           float64 `gorm:"type:decimal(10,4);default:null"`
 	IntermediateEnergies float64 `gorm:"type:decimal(15,4);default:null"`
 
+	// Новое поле для отслеживания расчета
+	IsCalculated bool `gorm:"type:boolean;default:false"`
+
 	Request CombustionCalculation `gorm:"foreignKey:RequestID"`
 	Fuel    Fuel                  `gorm:"foreignKey:FuelID"`
 }

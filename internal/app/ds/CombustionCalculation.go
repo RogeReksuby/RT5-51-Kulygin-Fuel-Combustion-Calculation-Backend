@@ -21,4 +21,8 @@ type CombustionCalculation struct {
 	// Связи
 	Creator   Users `gorm:"foreignKey:CreatorID"`
 	Moderator Users `gorm:"foreignKey:ModeratorID"`
+
+	// Новые поля для асинхронного расчета
+	CalculationStatus string `gorm:"type:varchar(20);default:'not_started'"`
+	AsyncToken        string `gorm:"type:varchar(32);default:null"`
 }
