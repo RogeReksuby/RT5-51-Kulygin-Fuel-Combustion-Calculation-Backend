@@ -40,6 +40,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.GET("/fuels/:id", h.GetFuelAPI)
 		api.POST("/users/register", h.RegisterUserAPI)
 		api.POST("/users/login", h.LoginUserAPI)
+		api.POST("/async/update-result", h.UpdateAsyncResultAPI) // для Django
 
 		api.Use(h.WithAuthCheckCart(role.Buyer, role.Moderator)).GET("/combustions/cart-icon", h.GetCombCartIconAPI)
 		// === ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизации) ===
@@ -50,6 +51,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			auth.GET("/users/profile", h.GetUserProfileAPI)
 			auth.POST("/users/logout", h.LogoutUserAPI)
 			auth.PUT("/users/profile", h.UpdateUserAPI)
+			auth.GET("/combustions/:id/progress", h.GetCombustionWithCountAPI)
 
 			// Работа с корзиной и заявками
 			//auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
@@ -73,6 +75,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 			moderator.DELETE("/fuels/:id", h.DeleteFuelAPI)
 			moderator.POST("/fuels/:id/image", h.UploadFuelImageAPI)
 			moderator.PUT("/combustions/:id/moderate", h.CompleteOrRejectCombustionAPI)
+			moderator.POST("/combustions/:id/start-async", h.StartAsyncCalculationAPI)
 		}
 	}
 }

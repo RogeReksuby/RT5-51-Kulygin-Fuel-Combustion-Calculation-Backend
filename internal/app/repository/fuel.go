@@ -585,11 +585,14 @@ func (r *Repository) FormCombustionCalculation(calculationID uint) error {
 }
 
 // CompleteOrRejectCombustion - завершение/отклонение модератором
-func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID uint, isComplete bool) error {
+// CompleteOrRejectCombustion - завершить или отклонить заявку (обновленная версия)
+func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID uint, isComplete bool, finalResult float64) error {
 	var calculation ds.CombustionCalculation
-	fmt.Println("iscomplete", isComplete)
+
 	// Проверяем что заявка существует и в статусе "сформирована"
-	err := r.db.Model(&ds.CombustionCalculation{}).Where("id = ? AND status = ?", calculationID, "сформирован").First(&calculation).Error
+	err := r.db.Model(&ds.CombustionCalculation{}).
+		Where("id = ? AND status = ?", calculationID, "сформирован").
+		First(&calculation).Error
 
 	if err != nil {
 		return fmt.Errorf("сформированная заявка с ID %d не найдена", calculationID)
@@ -602,38 +605,17 @@ func (r *Repository) CompleteOrRejectCombustion(calculationID uint, moderatorID 
 	} else {
 		newStatus = "отклонён"
 	}
+
 	updates := map[string]interface{}{
 		"status":       newStatus,
 		"date_update":  time.Now(),
 		"date_finish":  time.Now(),
 		"moderator_id": moderatorID,
 	}
-	// Рассчитываем FinalResult если завершаем
-	if isComplete {
 
-		var totalEnergy float64
-		var fuelComb []ds.CombustionsFuels
-		err = r.db.Where("request_id = ?", calculationID).Find(&fuelComb).Error
-		if err != nil {
-			return fmt.Errorf("ошибка получения данных об услугах: %w", err)
-		}
-
-		for _, fuelFromComb := range fuelComb {
-			var fuel ds.Fuel
-			var res float64
-			err = r.db.Where("id = ?", fuelFromComb.FuelID).Find(&fuel).Error
-			if err != nil {
-				return fmt.Errorf("ошибка получения данных об услугах: %w", err)
-			}
-			if fuel.IsGas {
-				res = fuel.Heat * fuel.MolarMass * fuelFromComb.FuelVolume / (calculation.MolarVolume)
-			} else {
-				res = fuel.Heat * fuel.Density * fuelFromComb.FuelVolume
-			}
-			r.db.Model(&ds.CombustionsFuels{}).Where("id = ?", fuelFromComb.ID).Update("intermediate_energies", res)
-			totalEnergy = totalEnergy + res
-		}
-		updates["final_result"] = totalEnergy
+	// Если завершаем - добавляем final_result если он указан
+	if isComplete && finalResult > 0 {
+		updates["final_result"] = finalResult
 	}
 
 	err = r.db.Model(&ds.CombustionCalculation{}).Where("id = ?", calculationID).Updates(updates).Error

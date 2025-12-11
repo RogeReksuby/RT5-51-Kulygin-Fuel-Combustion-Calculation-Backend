@@ -57,6 +57,19 @@ func main() {
 		c.Next()
 	})
 
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{
+			"message": "Fuel Calculation API",
+			"version": "1.0",
+			"docs":    "/swagger/index.html",
+			"endpoints": gin.H{
+				"http":  "http://localhost:8080",
+				"https": "https://localhost:8443",
+			},
+			"note": "HTTP automatically redirects to HTTPS",
+		})
+	})
+
 	conf, err := config.NewConfig()
 	if err != nil {
 		logrus.Fatalf("error loading config: %v", err)

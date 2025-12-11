@@ -275,27 +275,90 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 		return
 	}
 
-	err = h.Repository.CompleteOrRejectCombustion(uint(id), moderatorID, input.IsComplete)
-	if err != nil {
-		h.errorHandler(ctx, http.StatusBadRequest, err)
+	// Если ОТКЛОНЯЕМ - просто меняем статус
+	if !input.IsComplete {
+		err = h.Repository.CompleteOrRejectCombustion(uint(id), moderatorID, false, 0)
+		if err != nil {
+			h.errorHandler(ctx, http.StatusBadRequest, err)
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Заявка отклонена",
+		})
 		return
 	}
 
-	updatedCalculation, fuels, err := h.Repository.GetCombustionCalculationByID(uint(id))
+	// Если ОДОБРЯЕМ - запускаем асинхронный расчет
+
+	// 1. Проверяем, можно ли запустить расчет
+	combustionData, err := h.Repository.GetCombustionForAsync(uint(id))
+	if err != nil {
+		h.errorHandler(ctx, http.StatusNotFound, fmt.Errorf("заявка не найдена"))
+		return
+	}
+
+	if combustionData.Status != "сформирован" {
+		h.errorHandler(ctx, http.StatusBadRequest,
+			fmt.Errorf("заявка должна быть в статусе 'сформирован'"))
+		return
+	}
+
+	// 2. Получаем данные для расчета
+	fuels, err := h.Repository.GetCombustionFuelsForAsync(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
-	message := "Заявка отклонена"
-	if input.IsComplete {
-		message = "Заявка завершена"
+	if len(fuels) == 0 {
+		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("в заявке нет топлива"))
+		return
 	}
 
+	// 3. Генерируем токен и сохраняем
+	token := generateToken()
+	if err := h.Repository.SetAsyncToken(uint(id), token); err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	// 4. Запускаем асинхронный расчет для каждого топлива
+	for _, fuel := range fuels {
+		go func(f ds.AsyncFuelData) {
+			data := map[string]interface{}{
+				"combustion_id": id,
+				"fuel_id":       f.FuelID,
+				"fuel_volume":   f.FuelVolume,
+				"heat":          f.Heat,
+				"molar_mass":    f.MolarMass,
+				"density":       f.Density,
+				"is_gas":        f.IsGas,
+				"molar_volume":  combustionData.MolarVolume,
+			}
+
+			if err := callDjangoService(data, token); err != nil {
+				logrus.Errorf("Ошибка вызова Django для fuel_id=%d: %v", f.FuelID, err)
+			}
+		}(fuel)
+	}
+
+	// 5. Сохраняем ID модератора для будущего завершения
+	if err := h.Repository.SaveModeratorForAsync(uint(id), moderatorID); err != nil {
+		h.errorHandler(ctx, http.StatusInternalServerError, err)
+		return
+	}
+
+	// 6. Немедленно отвечаем
 	ctx.JSON(http.StatusOK, gin.H{
-		"data":    updatedCalculation,
-		"fuels":   fuels,
-		"message": message,
+		"status":  "processing",
+		"message": "Запущен асинхронный расчет энергии. Заявка будет завершена автоматически через 5-10 секунд.",
+		"data": gin.H{
+			"combustion_id":  id,
+			"fuels_count":    len(fuels),
+			"estimated_time": "5-10 секунд",
+		},
 	})
 }
 
