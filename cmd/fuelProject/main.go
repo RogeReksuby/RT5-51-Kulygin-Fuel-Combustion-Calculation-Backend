@@ -40,11 +40,41 @@ func main() {
 
 	// === CORS MIDDLEWARE ===
 	router.Use(func(c *gin.Context) {
-		// Разрешаем ВСЕ источники
-		c.Header("Access-Control-Allow-Origin", "*")
+		// Список разрешённых источников (origins)
+		allowedOrigins := []string{
+			"https://rogereksuby.github.io",
+			"https://localhost:8080",
+			"https://localhost:3000",
+			"https://192.168.1.173:8080",
+			"https://192.168.56.1:8080",
+			"https://localhost:8443",
+			"https://192.168.1.173:3000",
+			"https://192.168.56.1:3000",
+		}
+
+		// Получаем источник текущего запроса
+		requestOrigin := c.Request.Header.Get("Origin")
+
+		// Проверяем, разрешён ли источник
+		originAllowed := false
+		for _, allowedOrigin := range allowedOrigins {
+			if requestOrigin == allowedOrigin {
+				c.Header("Access-Control-Allow-Origin", requestOrigin)
+				originAllowed = true
+				break
+			}
+		}
+
+		// Если источник не из разрешённого списка, НЕ устанавливаем заголовок.
+		// Это значит, что браузер заблокирует ответ.
+
+		// Важно: Для запросов с куками/авторизацией
+		if originAllowed {
+			c.Header("Access-Control-Allow-Credentials", "true")
+		}
+
 		c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH, HEAD")
 		c.Header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token, localtonet-skip-warning")
-		c.Header("Access-Control-Allow-Credentials", "true")
 		c.Header("Access-Control-Max-Age", "86400")
 
 		// Обрабатываем preflight OPTIONS запросы
