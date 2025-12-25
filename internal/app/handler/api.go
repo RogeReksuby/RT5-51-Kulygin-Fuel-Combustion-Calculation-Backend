@@ -261,7 +261,8 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	}
 
 	var input struct {
-		IsComplete bool `json:"is_complete" binding:"required"`
+		//IsComplete bool `json:"is_complete" binding:"required"`
+		IsComplete bool `json:"is_complete"`
 	}
 
 	if err := ctx.ShouldBindJSON(&input); err != nil {
