@@ -237,6 +237,8 @@ func (h *Handler) FormCombustionCalculationAPI(ctx *gin.Context) {
 	})
 }
 
+// ... (все остальные функции без изменений)
+
 // CompleteOrRejectCombustionAPI godoc
 // @Summary Завершить или отклонить расчёт горения
 // @Description Модератор может завершить (одобрить) или отклонить расчёт горения. Требуется роль модератора.
@@ -261,10 +263,8 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	}
 
 	var input struct {
-		//IsComplete bool `json:"is_complete" binding:"required"`
 		IsComplete bool `json:"is_complete"`
 	}
-
 	if err := ctx.ShouldBindJSON(&input); err != nil {
 		h.errorHandler(ctx, http.StatusBadRequest, err)
 		return
@@ -283,7 +283,6 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 			h.errorHandler(ctx, http.StatusBadRequest, err)
 			return
 		}
-
 		ctx.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": "Заявка отклонена",
@@ -292,40 +291,35 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 	}
 
 	// Если ОДОБРЯЕМ - запускаем асинхронный расчет
-
-	// 1. Проверяем, можно ли запустить расчет
 	combustionData, err := h.Repository.GetCombustionForAsync(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusNotFound, fmt.Errorf("заявка не найдена"))
 		return
 	}
-
 	if combustionData.Status != "сформирован" {
 		h.errorHandler(ctx, http.StatusBadRequest,
 			fmt.Errorf("заявка должна быть в статусе 'сформирован'"))
 		return
 	}
 
-	// 2. Получаем данные для расчета
 	fuels, err := h.Repository.GetCombustionFuelsForAsync(uint(id))
 	if err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
-
 	if len(fuels) == 0 {
 		h.errorHandler(ctx, http.StatusBadRequest, fmt.Errorf("в заявке нет топлива"))
 		return
 	}
 
-	// 3. Генерируем токен и сохраняем
-	token := generateToken()
+	// ✅ ИСПРАВЛЕНО: теперь через h.generateToken()
+	token := h.generateToken()
 	if err := h.Repository.SetAsyncToken(uint(id), token); err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
-	// 4. Запускаем асинхронный расчет для каждого топлива
+	// ✅ ИСПРАВЛЕНО: теперь через h.callDjangoService(...)
 	for _, fuel := range fuels {
 		go func(f ds.AsyncFuelData) {
 			data := map[string]interface{}{
@@ -338,20 +332,17 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 				"is_gas":        f.IsGas,
 				"molar_volume":  combustionData.MolarVolume,
 			}
-
-			if err := callDjangoService(data, token); err != nil {
+			if err := h.callDjangoService(data, token); err != nil {
 				logrus.Errorf("Ошибка вызова Django для fuel_id=%d: %v", f.FuelID, err)
 			}
 		}(fuel)
 	}
 
-	// 5. Сохраняем ID модератора для будущего завершения
 	if err := h.Repository.SaveModeratorForAsync(uint(id), moderatorID); err != nil {
 		h.errorHandler(ctx, http.StatusInternalServerError, err)
 		return
 	}
 
-	// 6. Немедленно отвечаем
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  "processing",
 		"message": "Запущен асинхронный расчет энергии. Заявка будет завершена автоматически через 5-10 секунд.",
@@ -362,6 +353,8 @@ func (h *Handler) CompleteOrRejectCombustionAPI(ctx *gin.Context) {
 		},
 	})
 }
+
+// ... (остальные функции — без изменений)
 
 // RemoveFuelFromCombustionAPI godoc
 // @Summary Удалить топливо из заявки на расчёт горения
@@ -906,6 +899,7 @@ func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 		Title     string  `json:"title,omitempty"`
 		Heat      float64 `json:"heat,omitempty"`
 		MolarMass float64 `json:"molar_mass,omitempty"`
+		Density   float64 `json:"density,omitempty"`
 		CardImage string  `json:"card_image,omitempty"`
 		ShortDesc string  `json:"short_desc,omitempty"`
 		FullDesc  string  `json:"full_desc,omitempty"`
@@ -921,6 +915,7 @@ func (h *Handler) UpdateFuelAPI(ctx *gin.Context) {
 		Title:     fuelInput.Title,
 		Heat:      fuelInput.Heat,
 		MolarMass: fuelInput.MolarMass,
+		Density:   fuelInput.Density,
 		CardImage: fuelInput.CardImage,
 		ShortDesc: fuelInput.ShortDesc,
 		FullDesc:  fuelInput.FullDesc,

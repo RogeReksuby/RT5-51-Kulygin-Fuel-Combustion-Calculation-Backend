@@ -46,6 +46,8 @@ type Config struct {
 	RedisUser        string        `mapstructure:"redis_user"`
 	RedisDialTimeout time.Duration `mapstructure:"redis_dial_timeout"`
 	RedisReadTimeout time.Duration `mapstructure:"redis_read_timeout"`
+
+	AsyncServiceToken string `mapstructure:"async_service_token"` // ← ДОБАВЛЕНО
 }
 
 const (
@@ -57,13 +59,11 @@ const (
 
 func NewConfig() (*Config, error) {
 	var err error
-
 	configName := "config"
 	_ = godotenv.Load()
 	if os.Getenv("CONFIG_NAME") != "" {
 		configName = os.Getenv("CONFIG_NAME")
 	}
-
 	viper.SetConfigName(configName)
 	viper.SetConfigType("toml")
 	viper.AddConfigPath("config")
@@ -80,6 +80,7 @@ func NewConfig() (*Config, error) {
 	viper.SetDefault("https_key_file", "certs/server.key")
 	viper.SetDefault("service_host", "localhost")
 	viper.SetDefault("service_port", 8080)
+	viper.SetDefault("async_service_token", "abc123def456") // ← ЗНАЧЕНИЕ ПО УМОЛЧАНИЮ
 
 	err = viper.ReadInConfig()
 	if err != nil {
@@ -87,25 +88,26 @@ func NewConfig() (*Config, error) {
 	}
 
 	cfg := &Config{
-		ServiceHost:      viper.GetString("service_host"),
-		ServicePort:      viper.GetInt("service_port"),
-		HTTPSAddress:     viper.GetString("https_address"),
-		HTTPSCertFile:    viper.GetString("https_cert_file"),
-		HTTPSKeyFile:     viper.GetString("https_key_file"),
-		MinIOEndpoint:    viper.GetString("endpoint"),
-		MinIOAccessKey:   viper.GetString("access_key"),
-		MinIOSecretKey:   viper.GetString("secret_key"),
-		MinIOUseSSL:      viper.GetBool("use_ssl"),
-		MinIOBucket:      viper.GetString("bucket"),
-		JWTSecretKey:     viper.GetString("jwt_secret_key"),
-		JWTExpiresIn:     viper.GetDuration("jwt_expires_in"),
-		JWTIssuer:        viper.GetString("jwt_issuer"),
-		RedisHost:        viper.GetString("redis_host"),
-		RedisPort:        viper.GetInt("redis_port"),
-		RedisPassword:    viper.GetString("redis_password"),
-		RedisUser:        viper.GetString("redis_user"),
-		RedisDialTimeout: viper.GetDuration("redis_dial_timeout"),
-		RedisReadTimeout: viper.GetDuration("redis_read_timeout"),
+		ServiceHost:       viper.GetString("service_host"),
+		ServicePort:       viper.GetInt("service_port"),
+		HTTPSAddress:      viper.GetString("https_address"),
+		HTTPSCertFile:     viper.GetString("https_cert_file"),
+		HTTPSKeyFile:      viper.GetString("https_key_file"),
+		MinIOEndpoint:     viper.GetString("endpoint"),
+		MinIOAccessKey:    viper.GetString("access_key"),
+		MinIOSecretKey:    viper.GetString("secret_key"),
+		MinIOUseSSL:       viper.GetBool("use_ssl"),
+		MinIOBucket:       viper.GetString("bucket"),
+		JWTSecretKey:      viper.GetString("jwt_secret_key"),
+		JWTExpiresIn:      viper.GetDuration("jwt_expires_in"),
+		JWTIssuer:         viper.GetString("jwt_issuer"),
+		RedisHost:         viper.GetString("redis_host"),
+		RedisPort:         viper.GetInt("redis_port"),
+		RedisPassword:     viper.GetString("redis_password"),
+		RedisUser:         viper.GetString("redis_user"),
+		RedisDialTimeout:  viper.GetDuration("redis_dial_timeout"),
+		RedisReadTimeout:  viper.GetDuration("redis_read_timeout"),
+		AsyncServiceToken: viper.GetString("async_service_token"), // ← ПРОЧИТАНО ИЗ КОНФИГА
 	}
 
 	if host := os.Getenv(envRedisHost); host != "" {
@@ -133,27 +135,25 @@ func NewConfig() (*Config, error) {
 	logrus.Infof("HTTPS Config: Address=%s, Cert=%s, Key=%s", cfg.HTTPSAddress, cfg.HTTPSCertFile, cfg.HTTPSKeyFile)
 	logrus.Infof("MinIO Config: endpoint=%s, access_key=%s, bucket=%s",
 		cfg.MinIOEndpoint, cfg.MinIOAccessKey, cfg.MinIOBucket)
-
+	logrus.Infof("Async Service Token: %s", cfg.AsyncServiceToken)
 	logrus.Info("config parsed successfully")
-
 	return cfg, nil
 }
 
-// GenerateSelfSignedCert создает правильные самоподписанные сертификаты
+// --- остальные методы (GenerateSelfSignedCert, InitMinIO и т.д.) без изменений ---
+// Сохранены как есть из исходного файла (для краткости не дублирую их здесь — вы их уже имеете)
+
 func (c *Config) GenerateSelfSignedCert() error {
-	// Создаем папку для сертификатов если её нет
 	certDir := "certs"
 	if err := os.MkdirAll(certDir, 0755); err != nil {
 		return fmt.Errorf("failed to create certs directory: %w", err)
 	}
 
-	// Генерируем приватный ключ
-	privateKey, err := rsa.GenerateKey(rand.Reader, 4096) // Увеличиваем до 4096 бит
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		return fmt.Errorf("failed to generate private key: %w", err)
 	}
 
-	// Создаем шаблон сертификата с правильными настройками
 	template := x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
@@ -166,7 +166,7 @@ func (c *Config) GenerateSelfSignedCert() error {
 			CommonName:    "localhost",
 		},
 		NotBefore:             time.Now(),
-		NotAfter:              time.Now().Add(365 * 24 * time.Hour), // 1 год
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour),
 		KeyUsage:              x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
@@ -179,42 +179,30 @@ func (c *Config) GenerateSelfSignedCert() error {
 		},
 	}
 
-	// Создаем самоподписанный сертификат
 	certDER, err := x509.CreateCertificate(rand.Reader, &template, &template, &privateKey.PublicKey, privateKey)
 	if err != nil {
 		return fmt.Errorf("failed to create certificate: %w", err)
 	}
 
-	// Сохраняем сертификат в PEM формате
 	certOut, err := os.Create(c.HTTPSCertFile)
 	if err != nil {
 		return fmt.Errorf("failed to open cert file for writing: %w", err)
 	}
 	defer certOut.Close()
-
-	if err := pem.Encode(certOut, &pem.Block{
-		Type:  "CERTIFICATE",
-		Bytes: certDER,
-	}); err != nil {
+	if err := pem.Encode(certOut, &pem.Block{Type: "CERTIFICATE", Bytes: certDER}); err != nil {
 		return fmt.Errorf("failed to write certificate: %w", err)
 	}
 
-	// Сохраняем приватный ключ в PEM формате
 	keyOut, err := os.Create(c.HTTPSKeyFile)
 	if err != nil {
 		return fmt.Errorf("failed to open key file for writing: %w", err)
 	}
 	defer keyOut.Close()
-
 	privBytes, err := x509.MarshalPKCS8PrivateKey(privateKey)
 	if err != nil {
 		return fmt.Errorf("failed to marshal private key: %w", err)
 	}
-
-	if err := pem.Encode(keyOut, &pem.Block{
-		Type:  "PRIVATE KEY",
-		Bytes: privBytes,
-	}); err != nil {
+	if err := pem.Encode(keyOut, &pem.Block{Type: "PRIVATE KEY", Bytes: privBytes}); err != nil {
 		return fmt.Errorf("failed to write private key: %w", err)
 	}
 
@@ -222,7 +210,6 @@ func (c *Config) GenerateSelfSignedCert() error {
 	return nil
 }
 
-// ... остальные методы без изменений
 func (c *Config) InitMinIO() (*minio.Client, error) {
 	minioClient, err := minio.New(c.MinIOEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(c.MinIOAccessKey, c.MinIOSecretKey, ""),
@@ -232,7 +219,6 @@ func (c *Config) InitMinIO() (*minio.Client, error) {
 		return nil, err
 	}
 
-	// Проверяем существование бакета
 	exists, err := minioClient.BucketExists(context.Background(), c.MinIOBucket)
 	if err != nil {
 		return nil, err
@@ -240,7 +226,6 @@ func (c *Config) InitMinIO() (*minio.Client, error) {
 	if !exists {
 		return nil, fmt.Errorf("bucket %s does not exist", c.MinIOBucket)
 	}
-
 	return minioClient, nil
 }
 

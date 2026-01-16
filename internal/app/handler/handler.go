@@ -18,7 +18,10 @@ type Handler struct {
 }
 
 func NewHandler(r *repository.Repository) *Handler {
-	var conf, _ = config.NewConfig()
+	conf, err := config.NewConfig()
+	if err != nil {
+		logrus.Fatalf("Failed to load config: %v", err)
+	}
 	return &Handler{
 		Repository: r,
 		Config:     conf,
@@ -33,6 +36,7 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 	router.POST("/delete-fuel", h.DeleteChat)
 	router.POST("/add-to-comb", h.AddFuelToCart)
 	router.POST("/remove-comb/:id", h.RemoveRequest)
+
 	api := router.Group("/api")
 	{
 		// === ПУБЛИЧНЫЕ API МАРШРУТЫ (без авторизации) ===
@@ -41,20 +45,17 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		api.POST("/users/register", h.RegisterUserAPI)
 		api.POST("/users/login", h.LoginUserAPI)
 		api.POST("/async/update-result", h.UpdateAsyncResultAPI) // для Django
-
 		api.Use(h.WithAuthCheckCart(role.Buyer, role.Moderator)).GET("/combustions/cart-icon", h.GetCombCartIconAPI)
+
 		// === ЗАЩИЩЕННЫЕ МАРШРУТЫ (требуют авторизации) ===
 		auth := api.Group("")
 		auth.Use(h.WithAuthCheck(role.Buyer, role.Moderator))
 		{
-			// Пользовательские операции
 			auth.GET("/users/profile", h.GetUserProfileAPI)
 			auth.POST("/users/logout", h.LogoutUserAPI)
 			auth.PUT("/users/profile", h.UpdateUserAPI)
 			auth.GET("/combustions/:id/progress", h.GetCombustionWithCountAPI)
 
-			// Работа с корзиной и заявками
-			//auth.GET("/combustions/cart-icon", h.GetCombCartIconAPI)
 			auth.POST("/fuels/:id/add-to-comb", h.AddFuelToCartAPI)
 			auth.GET("/combustions/:id", h.GetCombustionCalculationAPI)
 			auth.PUT("/combustions/:id", h.UpdateCombustionMolarVolumeAPI)
@@ -69,7 +70,6 @@ func (h *Handler) RegisterHandler(router *gin.Engine) {
 		moderator := api.Group("")
 		moderator.Use(h.WithAuthCheck(role.Moderator))
 		{
-			// Управление топливом
 			moderator.POST("/fuels", h.CreateFuelAPI)
 			moderator.PUT("/fuels/:id", h.UpdateFuelAPI)
 			moderator.DELETE("/fuels/:id", h.DeleteFuelAPI)

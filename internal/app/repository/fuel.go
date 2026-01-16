@@ -190,7 +190,7 @@ func (r *Repository) CreateFuel(fuel *ds.Fuel) error {
 	}
 
 	err := r.db.Select(
-		"Title", "Heat", "MolarMass", "CardImage",
+		"Title", "Heat", "MolarMass", "CardImage", "Density",
 		"ShortDesc", "FullDesc", "IsGas", "IsDelete",
 	).Create(fuel).Error
 	if err != nil {
@@ -212,6 +212,7 @@ func (r *Repository) UpdateFuel(id uint, fuelData *ds.Fuel) error {
 		"title":      fuelData.Title,
 		"heat":       fuelData.Heat,
 		"molar_mass": fuelData.MolarMass,
+		"density":    fuelData.Density,
 		"card_image": fuelData.CardImage,
 		"short_desc": fuelData.ShortDesc,
 		"full_desc":  fuelData.FullDesc,
